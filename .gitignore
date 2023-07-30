@@ -1,0 +1,8 @@
+.venv
+data
+*.zip
+__pycache__
+*.csv
+*.xlsx
+tensorboard
+model
