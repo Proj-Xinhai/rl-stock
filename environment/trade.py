@@ -6,14 +6,20 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import shuffle
 from stable_baselines3.common.callbacks import BaseCallback
 
+
 class Env(gym.Env):
     def __init__(self, train: bool = True):
         super(Env, self).__init__()
 
         self.train = train
 
-        self.observation_space = spaces.Box(low=np.array([np.concatenate([np.zeros(7), -np.ones(7), np.array([-np.inf])])]), high=np.array([np.concatenate([np.ones(7), np.ones(7), np.array([np.inf])])]), shape=(1, 7 + 7 + 1), dtype=np.float32) # 觀察值範圍處理
-        self.action_space = spaces.Discrete(3) # buy or sell or hold
+        self.observation_space = spaces.Box(
+            low=np.array([np.concatenate([np.zeros(7), -np.ones(7), np.array([-np.inf])])]),
+            high=np.array([np.concatenate([np.ones(7), np.ones(7), np.array([np.inf])])]),
+            shape=(1, 7 + 7 + 1),
+            dtype=np.float32
+        )  # 觀察值範圍處理
+        self.action_space = spaces.Discrete(3)  # buy or sell or hold
         ind = pd.read_csv('data/ind.csv')
         self.ind = ind['代號'].to_list()
         self.ind = shuffle(self.ind, random_state=25)
@@ -23,23 +29,23 @@ class Env(gym.Env):
         '''
         self.now = None
         self.last_close = None
-        self.hold = 0 # 持有量
-        # self.balance = 1_000_000 # 餘額 (初始為100萬，以每股1000元計算，可以購買1000股，也就是1張)
-        self.trade = 1000 # 每次交易量(單位: 股)
-        self.holding_count = 0 # 不動作次數
-        # self.last_balance = 100_000 # 上一次餘額
-        # self.cost = [] # Deprecated!, 改用平均成本
-        self.cost = 0 # 平均成本 (平均成本法)
+        self.hold = 0  # 持有量
+        # self.balance = 1_000_000  # 餘額 (初始為100萬，以每股1000元計算，可以購買1000股，也就是1張)
+        self.trade = 1000  # 每次交易量(單位: 股)
+        self.holding_count = 0  # 不動作次數
+        # self.last_balance = 100_000 #  上一次餘額
+        # self.cost = [] #  Deprecated!, 改用平均成本
+        self.cost = 0  # 平均成本 (平均成本法)
         self.net = 0
         self.last_net = 0
-        self.net_not_include_settlement = 0
+        self.net_exclude_settlement = 0
 
         '''
         正規化器
         '''
         self.scaler = MinMaxScaler()
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, *args, **kwargs):
         if len(self.ind) == 0:
             ind = pd.read_csv('data/ind.csv')
             self.ind = ind['代號'].to_list()
@@ -75,7 +81,8 @@ class Env(gym.Env):
         self.scaler.fit(self.now['Close'].values.reshape(-1, 1))
         self.now['Close'] = self.scaler.transform(self.now['Close'].values.reshape(-1, 1)).reshape(-1)
 
-        obs = self.now[self.now.index == self.now.index[0]].apply(lambda x: x.apply(lambda y: y.replace(',', '') if type(y) == str else y))
+        obs = (self.now[self.now.index == self.now.index[0]]
+               .apply(lambda x: x.apply(lambda y: y.replace(',', '') if type(y) == str else y)))
         self.now = self.now.drop(self.now.index[0])
         # self.last_close = obs['Close'].values[0]
 
@@ -92,7 +99,8 @@ class Env(gym.Env):
         buy_or_sell = bool(action) if action != 2 else None
 
         # 昨天的股價+昨天的買賣超資訊決定今天交易的方向
-        obs = self.now[self.now.index == self.now.index[0]].apply(lambda x: x.apply(lambda y: y.replace(',', '') if type(y) == str else y))
+        obs = (self.now[self.now.index == self.now.index[0]]
+               .apply(lambda x: x.apply(lambda y: y.replace(',', '') if type(y) == str else y)))
         self.now = self.now.drop(self.now.index[0])
         
         reward = 0
@@ -107,40 +115,40 @@ class Env(gym.Env):
         if done:
             # 強制結算
             # self.balance += real_close * self.hold
-            self.net += (real_close - self.cost) * self.hold # 結算淨損益
-            # self.net_not_include_settlement 此處不計算，為了排除非主動交易所造成的損益
-            self.hold = 0 # 重置持有量
-            self.holding_count = 0 # 重置持平計數器
-            self.cost = 0 # 重置平均成本 (不重置也不會有影響，因為持有量為0，下次計算時本次平均成本的權重也為0)
+            self.net += (real_close - self.cost) * self.hold  # 結算淨損益
+            # self.net_exclude_settlement 此處不計算，為了排除非主動交易所造成的損益
+            self.hold = 0  # 重置持有量
+            self.holding_count = 0  # 重置持平計數器
+            self.cost = 0  # 重置平均成本 (不重置也不會有影響，因為持有量為0，下次計算時本次平均成本的權重也為0)
 
-            # if self.balance > 1_000_000: # 如果最終餘額大於初始餘額，給予獎勵
+            # if self.balance > 1_000_000:  # 如果最終餘額大於初始餘額，給予獎勵
             #     reward += 10
-            if self.net > self.last_net: # 如果最終淨損益大於0，給予獎勵
+            if self.net > self.last_net:  # 如果最終淨損益大於0，給予獎勵
                 reward += 10
 
             # self.last_balance = self.balance
             self.last_net = self.net
         else:
 
-            if buy_or_sell == None: # 持平，不動作
+            if buy_or_sell is None:  # 持平，不動作
                 self.holding_count += 1
 
                 if self.holding_count == 10:
                     reward -= 3
                     self.holding_count = 0
             else:
-                self.holding_count = 0 # 持平計數器歸零
+                self.holding_count = 0  # 持平計數器歸零
 
-                if (not buy_or_sell) & (last_hold == 0): # 如果無持有，但賣出，懲罰並不動作
+                if (not buy_or_sell) & (last_hold == 0):  # 如果無持有，但賣出，懲罰並不動作
                     reward -= 1
-                else: # 正常買入及賣出
+                else:  # 正常買入及賣出
 
                     # 淨損益計算
                     if buy_or_sell:
                         self.cost = (real_close * self.trade + self.cost * self.hold) / (self.trade + self.hold)
                     else:
                         self.net += (real_close - self.cost) * self.trade
-                        self.net_not_include_settlement += (real_close - self.cost) * self.trade
+                        self.net_exclude_settlement += (real_close - self.cost) * self.trade
 
                         # 如果有賺，給予獎勵
                         if real_close - self.cost > 0:
@@ -161,12 +169,19 @@ class Env(gym.Env):
         # obs['balance'] = self.balance
 
         return obs.to_numpy().astype(np.float32), reward, done, False, \
-            {'hold': self.hold, 'holding_count': self.holding_count, 'net': self.net, 'net_not_include_settlement': self.net_not_include_settlement, 'finish': len(self.ind) == 0}
-    
+            {
+                'hold': self.hold,
+                'holding_count': self.holding_count,
+                'net': self.net,
+                'net_exclude_settlement': self.net_exclude_settlement,
+                'finish': len(self.ind) == 0
+            }
+
+
 class TensorboardCallback(BaseCallback):
-    '''
+    """
     Tensorboard 記錄
-    '''
+    """
     def __init__(self, verbose=0):
         super(TensorboardCallback, self).__init__(verbose)
 
@@ -175,7 +190,7 @@ class TensorboardCallback(BaseCallback):
         # self.logger.record('env/balance', self.training_env.get_attr('balance')[0])
         self.logger.record('env/holding_count', self.training_env.get_attr('holding_count')[0])
         self.logger.record('env/net', self.training_env.get_attr('net')[0])
-        self.logger.record('env/net_not_include_settlement', self.training_env.get_attr('net_not_include_settlement')[0])
+        self.logger.record('env/net_exclude_settlement', self.training_env.get_attr('net_exclude_settlement')[0])
         return True
 
 
