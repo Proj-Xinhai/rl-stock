@@ -50,7 +50,7 @@ if __name__ == '__main__':
             # writer.add_scalar('env/balance', info['balance'], step_count)
             writer.add_scalar('env/holding_count', info['holding_count'], step_count)
             writer.add_scalar('env/net', info['net'], step_count)
-            writer.add_scalar('env/net_not_include_settlement', info['net_not_include_settlement'], step_count)
+            writer.add_scalar('env/net_exclude_settlement', info['net_exclude_settlement'], step_count)
             
             step_count += 1
             

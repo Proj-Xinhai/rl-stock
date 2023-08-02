@@ -16,7 +16,7 @@ class Env(gym.Env):
         self.observation_space = spaces.Box(
             low=np.array([np.concatenate([np.zeros(7), -np.ones(7), np.array([-np.inf])])]),
             high=np.array([np.concatenate([np.ones(7), np.ones(7), np.array([np.inf])])]),
-            shape=(1, 7 + 7 + 1),
+            shape=(1, 7 + 7 + 1),  # 7: 個股資料, 7: 法人買賣超, 1: 持有量
             dtype=np.float32
         )  # 觀察值範圍處理
         self.action_space = spaces.Discrete(3)  # buy or sell or hold
@@ -45,7 +45,7 @@ class Env(gym.Env):
         '''
         self.scaler = MinMaxScaler()
 
-    def reset(self, seed=None, *args, **kwargs):
+    def reset(self, seed=None, *args, **kwargs) -> tuple[np.ndarray, dict]:
         if len(self.ind) == 0:
             ind = pd.read_csv('data/ind.csv')
             self.ind = ind['代號'].to_list()
@@ -95,7 +95,7 @@ class Env(gym.Env):
         
         return obs.to_numpy().astype(np.float32), {'stock_id': stock_num}
 
-    def step(self, action):
+    def step(self, action) -> tuple[np.ndarray, float, bool, bool, dict]:
         buy_or_sell = bool(action) if action != 2 else None
 
         # 昨天的股價+昨天的買賣超資訊決定今天交易的方向
