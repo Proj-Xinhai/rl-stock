@@ -1,10 +1,10 @@
-from stable_baselines3 import PPO, A2C
+# from stable_baselines3 import PPO, A2C
 from sb3_contrib import RecurrentPPO
 import datetime
 
 from environment.trade import Env, TensorboardCallback
 
-MODE = 0 # 0: train, 1: test
+MODE = 0  # 0: train, 1: test
 
 if __name__ == '__main__':
 
@@ -14,8 +14,8 @@ if __name__ == '__main__':
         start = datetime.datetime.now()
         print(f'start: {start}')
 
-
-        model = RecurrentPPO('MlpLstmPolicy', env, learning_rate=3e-4, verbose=1, tensorboard_log='./tensorboard/ppo_trade') # , n_steps=1205
+        model = RecurrentPPO('MlpLstmPolicy', env, learning_rate=3e-4, verbose=1,
+                             tensorboard_log='./tensorboard/ppo_trade')  # , n_steps=1205
         model.learn(total_timesteps=1_000_000, progress_bar=True, callback=TensorboardCallback())
 
         model.save('model/trade_recurrent_ppo_3')
@@ -62,8 +62,8 @@ if __name__ == '__main__':
                 writer = SummaryWriter(os.path.join(tb_dir, info['stock_id']))
                 step_count = 0
                 # env.balance = 1_000_000 # 重置餘額
-                env.net = 0 # 重置淨損益
-                env.net_not_include_settlement = 0 # 重置淨損益(不含結算)
+                env.net = 0  # 重置淨損益
+                env.net_not_include_settlement = 0  # 重置淨損益(不含結算)
 
     else:
         raise ValueError('MODE must be 0 or 1')
