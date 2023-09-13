@@ -1,5 +1,4 @@
-# from stable_baselines3 import PPO, A2C
-from sb3_contrib import RecurrentPPO
+from stable_baselines3 import A2C
 import datetime
 
 from environment.trade import Env, TensorboardCallback
@@ -14,11 +13,11 @@ if __name__ == '__main__':
         start = datetime.datetime.now()
         print(f'start: {start}')
 
-        model = RecurrentPPO('MlpLstmPolicy', env, learning_rate=3e-4, verbose=1,
-                             tensorboard_log='./tensorboard/ppo_trade')  # , n_steps=1205
+        model = A2C('MlpPolicy', env, learning_rate=3e-4, verbose=1,
+                             tensorboard_log='./tensorboard/a2c_trade')  # , n_steps=1205
         model.learn(total_timesteps=1_000_000, progress_bar=True, callback=TensorboardCallback())
 
-        model.save('model/trade_recurrent_ppo_3')
+        model.save('model/trade_a2c_1')
 
         end = datetime.datetime.now()
 
@@ -32,9 +31,9 @@ if __name__ == '__main__':
 
         env = Env(train=False)
 
-        model = RecurrentPPO.load('model/trade_recurrent_ppo_3')
+        model = A2C.load('model/trade_a2c_1')
 
-        tb_dir = 'tensorboard/ppo_trade3_evaluate'
+        tb_dir = 'tensorboard/a2c_trade1_evaluate'
         # if not os.path.isdir(tb_dir):
         #     os.mkdir(tb_dir)
 
