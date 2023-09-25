@@ -1,0 +1,86 @@
+import datetime
+from environment.trade_new import Env, TensorboardCallback
+from torch.utils.tensorboard import SummaryWriter
+
+class Pipeline:
+    def __init__(self, tasks: list):
+        self.tasks = tasks
+        self._check_components()  # check components
+
+    def _check_components(self):
+        for p, i in zip(self.tasks, range(len(self.tasks))):
+            assert 'name' in p, f'pipeline[{i}]: name is required'
+            # algorithm
+            assert 'algorithm' in p, f'pipeline[{i}]: algorithm is required'
+            assert 'algorithm_args' in p, f'pipeline[{i}]: algorithm_args is required'
+            assert 'learn_args' in p, f'pipeline[{i}]: learn_args is required'
+            # environment
+            assert 'data_getter' in p, f'pipeline[{i}]: data_getter is required'
+            assert 'data_preprocess' in p, f'pipeline[{i}]: data_preprocess is required'
+            assert 'action_decoder' in p, f'pipeline[{i}]: action_decoder is required'
+            assert 'observation_space' in p, f'pipeline[{i}]: observation_space is required'
+            assert 'action_space' in p, f'pipeline[{i}]: action_space is required'
+
+    def _train(self, task: dict):
+        env = Env(data_getter=task['data_getter'],
+                  data_preprocess=task['data_preprocess'],
+                  action_decoder=task['action_decoder'],
+                  observation_space=task['observation_space'],
+                  action_space=task['action_space'])
+        model = task['algorithm'](**task['algorithm_args'], env=env, verbose=1,
+                                      tensorboard_log=f'tensorboard/{task["name"]}')
+        model.learn(**task['learn_args'], progress_bar=True, callback=TensorboardCallback())
+        model.save(f'model/{task["name"]}')
+
+        # GC
+        del env
+        del model
+
+    def _test(self, task: dict):
+        writer = SummaryWriter(f'tensorboard/{task["name"]}_test')
+        env = Env(data_getter=task['data_getter'],
+                  data_preprocess=task['data_preprocess'],
+                  action_decoder=task['action_decoder'],
+                  observation_space=task['observation_space'],
+                  action_space=task['action_space'])
+        model = task['algorithm'].load(f'model/{task["name"]}')
+        obs, info = env.reset()
+        step_count = 0
+        while True:
+            action, _states = model.predict(obs, deterministic=True)
+            obs, rewards, terminated, truncated, info = env.step(action)
+
+            writer.add_scalar('env/hold', info['hold'], step_count)
+            writer.add_scalar('env/holding_count', info['holding_count'], step_count)
+            writer.add_scalar('env/net', info['net'], step_count)
+            writer.add_scalar('env/net_exclude_settlement', info['net_exclude_settlement'], step_count)
+            writer.add_scalar('env/reward', rewards, step_count)
+
+            step_count += 1
+
+            if terminated:
+                if info['finish']:
+                    break
+                obs, info = env.reset()
+                # writer = SummaryWriter(f'tensorboard/{task["name"]}_test')
+
+        # GC
+        writer.close()
+        del env
+        del model
+
+    def train(self):
+        yield  # ready for first
+        for task in self.tasks:
+            self._train(task)
+            yield task['name']  # ready for next
+
+    def test(self):
+        yield  # ready for first
+        for task in self.tasks:
+            self._test(task)
+            yield task['name']  # ready for next
+
+
+if __name__ == '__main__':
+    raise NotImplementedError('this file not meant to be executed')
