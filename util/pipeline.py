@@ -15,11 +15,9 @@ class Pipeline:
             assert 'algorithm_args' in p, f'pipeline[{i}]: algorithm_args is required'
             assert 'learn_args' in p, f'pipeline[{i}]: learn_args is required'
             # environment
-            assert 'data_getter' in p, f'pipeline[{i}]: data_getter is required'
-            assert 'data_preprocess' in p, f'pipeline[{i}]: data_preprocess is required'
-            assert 'action_decoder' in p, f'pipeline[{i}]: action_decoder is required'
-            assert 'observation_space' in p, f'pipeline[{i}]: observation_space is required'
-            assert 'action_space' in p, f'pipeline[{i}]: action_space is required'
+            assert 'helper' in p, f'pipeline[{i}]: helper is required'
+            if p['helper'].observation_space is None or p['helper'].action_space is None:
+                raise ValueError(f'pipeline[{i}]: nither observation_space nor action_space can be None')
 
     def _train(self, task: dict):
         env = Env(data_getter=task['data_getter'],
@@ -28,7 +26,7 @@ class Pipeline:
                   observation_space=task['observation_space'],
                   action_space=task['action_space'])
         model = task['algorithm'](**task['algorithm_args'], env=env, verbose=1,
-                                      tensorboard_log=f'tensorboard/{task["name"]}')
+                                  tensorboard_log=f'tensorboard/{task["name"]}')
         model.learn(**task['learn_args'], progress_bar=True, callback=TensorboardCallback())
         model.save(f'model/{task["name"]}')
 
