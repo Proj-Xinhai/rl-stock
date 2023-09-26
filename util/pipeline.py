@@ -17,8 +17,10 @@ class Pipeline:
             assert 'learn_args' in p, f'pipeline[{i}]: learn_args is required'
             # environment
             assert 'helper' in p, f'pipeline[{i}]: helper is required'
-            if p['helper'].observation_space is None or p['helper'].action_space is None:
+            helper = p['helper']()
+            if helper.observation_space is None or helper.action_space is None:
                 raise ValueError(f'pipeline[{i}]: nither observation_space nor action_space can be None')
+            del helper
 
     def _train(self, task: dict):
         helper = task['helper']()
