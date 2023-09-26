@@ -8,10 +8,12 @@ from typing import Callable, Any
 
 
 class Env(gym.Env):
-    def __init__(self, train: bool = True, action: str = 'discrete',
+    def __init__(self, train: bool = True,
                  observation_space: Any = None, action_space: Any = None,
                  data_getter: Callable = None, data_preprocess: Callable = None, action_decoder: Callable = None):
         super(Env, self).__init__()
+        #  action: str = 'discrete',
+        self.train = train  # 訓練模式
 
         if data_getter is None:
             raise ValueError('data_process must be a function')
@@ -68,7 +70,7 @@ class Env(gym.Env):
         '''
         載入個股資料
         '''
-        data = self.data_getter(stock_num)
+        data = self.data_getter(stock_num, is_train=self.train)
         if self.data_preprocess is not None:
             data, self.scaler = self.data_preprocess(data)
 
