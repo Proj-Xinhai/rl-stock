@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 'total_timesteps': 1_000_000
             },
             # environment
-            'helper': SMAHelper(),
+            'helper': SMAHelper,
         },
         {
             'name': 'trade_recurrent_ppo_sma_2e-4',
@@ -106,7 +106,7 @@ if __name__ == '__main__':
                 'total_timesteps': 1_000_000
             },
             # environment
-            'helper': SMAHelper(),
+            'helper': SMAHelper,
         },
         {
             'name': 'trade_recurrent_ppo_sma_1e-4',
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                 'total_timesteps': 1_000_000
             },
             # environment
-            'helper': SMAHelper(),
+            'helper': SMAHelper,
         }
     ]
 

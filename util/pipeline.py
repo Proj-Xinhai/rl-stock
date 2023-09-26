@@ -21,12 +21,13 @@ class Pipeline:
                 raise ValueError(f'pipeline[{i}]: nither observation_space nor action_space can be None')
 
     def _train(self, task: dict):
+        helper = task['helper']()
         env = Env(train=True,
-                  data_getter=task['helper'].data_getter,
-                  data_preprocess=task['helper'].data_preprocess,
-                  action_decoder=task['helper'].action_decoder,
-                  observation_space=task['helper'].observation_space,
-                  action_space=task['helper'].action_space)
+                  data_getter=helper.data_getter,
+                  data_preprocess=helper.data_preprocess,
+                  action_decoder=helper.action_decoder,
+                  observation_space=helper.observation_space,
+                  action_space=helper.action_space)
         model = task['algorithm'](**task['algorithm_args'], env=env, verbose=1,
                                   tensorboard_log=f'tensorboard/{task["name"]}')
         model.learn(**task['learn_args'], progress_bar=True, callback=TensorboardCallback())
@@ -37,13 +38,14 @@ class Pipeline:
         del model
 
     def _test(self, task: dict):
+        helper = task['helper']()
         writer = SummaryWriter(f'tensorboard/{task["name"]}_test')
         env = Env(train=False,
-                  data_getter=task['helper'].data_getter,
-                  data_preprocess=task['helper'].data_preprocess,
-                  action_decoder=task['helper'].action_decoder,
-                  observation_space=task['helper'].observation_space,
-                  action_space=task['helper'].action_space)
+                  data_getter=helper.data_getter,
+                  data_preprocess=helper.data_preprocess,
+                  action_decoder=helper.action_decoder,
+                  observation_space=helper.observation_space,
+                  action_space=helper.action_space)
         model = task['algorithm'].load(f'model/{task["name"]}')
         obs, info = env.reset()
         step_count = 0
