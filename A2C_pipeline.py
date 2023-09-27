@@ -8,12 +8,12 @@ if __name__ == '__main__':
     # tasks to run
     tasks = [
         {
-            'name': 'trade_recurrent_ppo',
+            'name': 'trade_a2c',
             # algorithm
             'algorithm': A2C,
             'algorithm_args': {
                 'policy': 'MlpPolicy',
-                'learning_rate': 3e-4
+                'learning_rate': 7e-4
             },
             'learn_args': {
                 'total_timesteps': 1_000_000
@@ -22,12 +22,12 @@ if __name__ == '__main__':
             'helper': NormalHelper,
         },
         {
-            'name': 'trade_recurrent_ppo_sma',
+            'name': 'trade_a2c_sma',
             # algorithm
             'algorithm': A2C,
             'algorithm_args': {
                 'policy': 'MlpPolicy',
-                'learning_rate': 3e-4
+                'learning_rate': 7e-4
             },
             'learn_args': {
                 'total_timesteps': 1_000_000
