@@ -12,7 +12,7 @@ if __name__ == '__main__':
             # algorithm
             'algorithm': A2C,
             'algorithm_args': {
-                'policy': 'MlpLstmPolicy',
+                'policy': 'MlpPolicy',
                 'learning_rate': 3e-4
             },
             'learn_args': {
@@ -26,7 +26,7 @@ if __name__ == '__main__':
             # algorithm
             'algorithm': A2C,
             'algorithm_args': {
-                'policy': 'MlpLstmPolicy',
+                'policy': 'MlpPolicy',
                 'learning_rate': 3e-4
             },
             'learn_args': {
