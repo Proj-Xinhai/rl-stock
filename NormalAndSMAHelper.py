@@ -78,8 +78,8 @@ class NormalHelper(BasicPipelineHelper):
     def __init__(self):
         super(NormalHelper, self).__init__()  # 繼承父類別的__init__()
         self.observation_space = spaces.Box(
-            low=np.array([np.concatenate([np.zeros(7), np.zeros(4), -np.ones(7), np.array([-np.inf])])]),
-            high=np.array([np.concatenate([np.ones(7), np.ones(4), np.ones(7), np.array([np.inf])])]),
+            low=np.array([np.concatenate([np.zeros(7), -np.ones(7), np.array([-np.inf])])]),
+            high=np.array([np.concatenate([np.ones(7), np.ones(7), np.array([np.inf])])]),
             shape=(1, 7 + 7 + 1),  # 7: 個股資料, 4: SMA, 7: 法人買賣超, 1: 持有量
             dtype=np.float32
         )
