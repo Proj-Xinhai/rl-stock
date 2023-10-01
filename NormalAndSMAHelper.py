@@ -12,7 +12,7 @@ class SMAHelper(BasicPipelineHelper):
         super(SMAHelper, self).__init__()  # 繼承父類別的__init__()
         self.observation_space = spaces.Box(
             low=np.array([np.concatenate([np.zeros(7), np.zeros(4), -np.ones(7), np.array([-np.inf])])]),
-            high=np.array([np.concatenate([np.ones(7), np.ones(4), np.ones(7), np.array([np.inf])])]),
+            high=np.array([np.concatenate([np.ones(7), np.ones(4) * 4, np.ones(7), np.array([np.inf])])]),
             shape=(1, 7 + 4 + 7 + 1),  # 7: 個股資料, 4: SMA, 7: 法人買賣超, 1: 持有量
             dtype=np.float32
         )
@@ -54,6 +54,9 @@ class SMAHelper(BasicPipelineHelper):
             for i in data[data[item].isnull()].index:
                 data.loc[i, item] = data.iloc[:data.index.get_loc(i) + 1]['Close'].mean()
 
+        # 幫SMA排名
+        data[['MA5', 'MA10', 'MA20', 'MA60']] = data[['MA5', 'MA10', 'MA20', 'MA60']].rank(axis=1, method='dense')
+
         return data
 
     def data_preprocess(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, Any]:
@@ -63,10 +66,10 @@ class SMAHelper(BasicPipelineHelper):
         data['High'] = scaler.transform(data['High'].values.reshape(-1, 1)).reshape(-1)
         data['Low'] = scaler.transform(data['Low'].values.reshape(-1, 1)).reshape(-1)
         data['Close'] = scaler.transform(data['Close'].values.reshape(-1, 1)).reshape(-1)
-        data['MA5'] = scaler.transform(data['MA5'].values.reshape(-1, 1)).reshape(-1)
-        data['MA10'] = scaler.transform(data['MA10'].values.reshape(-1, 1)).reshape(-1)
-        data['MA20'] = scaler.transform(data['MA20'].values.reshape(-1, 1)).reshape(-1)
-        data['MA60'] = scaler.transform(data['MA60'].values.reshape(-1, 1)).reshape(-1)
+        # data['MA5'] = scaler.transform(data['MA5'].values.reshape(-1, 1)).reshape(-1)
+        # data['MA10'] = scaler.transform(data['MA10'].values.reshape(-1, 1)).reshape(-1)
+        # data['MA20'] = scaler.transform(data['MA20'].values.reshape(-1, 1)).reshape(-1)
+        # data['MA60'] = scaler.transform(data['MA60'].values.reshape(-1, 1)).reshape(-1)
 
         return data, scaler
 
