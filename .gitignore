@@ -1,9 +1,10 @@
-.idea
-.venv
-data
+/.idea/
+/.venv/
+/data/
 *.zip
-__pycache__
+/__pycache__/
 *.csv
 *.xlsx
-tensorboard
-model
+/tensorboard/
+/model/
+/tasks/
