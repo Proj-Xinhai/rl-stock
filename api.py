@@ -141,7 +141,7 @@ def main():
     zeroconf.register_service(info)
     browser = ServiceBrowser(zeroconf, "_http._tcp.local.", handlers=[on_service_state_change])
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, ssl_keyfile="api/cert/rl-stock.local.key", ssl_certfile="api/cert/rl-stock.local.crt")
 
     browser.cancel()
 
