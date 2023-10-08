@@ -104,7 +104,7 @@ def list_works():
     return works
 
 
-def get_scaler(uuid: str):
+def get_scalar(uuid: str, ignores: dict = None):
     data = {
         'train': [],
         'test': []
@@ -126,6 +126,10 @@ def get_scaler(uuid: str):
                 }
             )])
 
+            # if 'train' in ignores and tag in ignores['train']:
+            #     train_temp = train_temp.mask(train_temp['step'] <= ignores['train'][tag])
+            #     train_temp = train_temp.dropna()
+
         train_temp = train_temp.groupby(['tag'])[['step', 'value']].agg({
             'step': lambda x: list(x),
             'value': lambda x: list(x)
@@ -134,9 +138,10 @@ def get_scaler(uuid: str):
         train_temp['group'] = [t.split('/')[0] for t in train_temp['tag']]
 
         train_temp = train_temp.groupby(['group'])[['tag', 'step', 'value']].apply(lambda x: x.to_dict('records'))
-        train_temp = train_temp.reset_index(name='data').to_dict('records')
+        # if not train_temp.empty:
+        train_temp = train_temp.reset_index(name='data')
 
-        data['train'] = train_temp
+        data['train'] = train_temp.to_dict('records')
 
     if os.path.exists(f'tasks/works/{uuid}/{uuid}_test'):
         test = EventAccumulator(f'tasks/works/{uuid}/{uuid}_test')
@@ -154,6 +159,10 @@ def get_scaler(uuid: str):
                 }
             )])
 
+            # if 'test' in ignores and tag in ignores['test']:
+            #     test_temp = test_temp.mask(test_temp['step'] <= ignores['test'][tag])
+            #     test_temp = test_temp.dropna()
+
         test_temp = test_temp.groupby(['tag'])[['step', 'value']].agg({
             'step': lambda x: list(x),
             'value': lambda x: list(x)
@@ -162,9 +171,10 @@ def get_scaler(uuid: str):
         test_temp['group'] = [t.split('/')[0] for t in test_temp['tag']]
 
         test_temp = test_temp.groupby(['group'])[['tag', 'step', 'value']].apply(lambda x: x.to_dict('records'))
-        test_temp = test_temp.reset_index(name='data').to_dict('records')
+        # if not test_temp.empty:
+        test_temp = test_temp.reset_index(name='data')
 
-        data['test'] = test_temp
+        data['test'] = test_temp.to_dict('records')
 
     return data
 

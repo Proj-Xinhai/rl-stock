@@ -123,8 +123,8 @@ async def update_all(sid):
 
 
 @sio.event
-async def get_scaler(sid, data):
-    return works.get_scaler(data)
+async def get_scalar(sid, data):
+    return works.get_scalar(**data)
 
 
 def main():
