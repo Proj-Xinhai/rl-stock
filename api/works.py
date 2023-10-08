@@ -49,10 +49,12 @@ def set_work_timeline(uuid: str, name: str, status: int, detail: str):
         if t['name'] == name:
             if status == 1:
                 t['from'] = time()
-            elif status == 2:
+            elif status == 2 or status == -1:
                 t['to'] = time()
             t['status'] = status
             t['detail'] = detail
+
+    set_work_status(uuid, status, detail)
 
     with open(f'tasks/works/{uuid}.json', 'w') as f:
         json.dump(args, f)
