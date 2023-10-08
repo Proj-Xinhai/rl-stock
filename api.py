@@ -74,6 +74,17 @@ def read_root():
     return {"status": "ok", "services": SERVICES}
 
 
+@sio.event(namespace="/service")
+async def get_services(sid):
+    print(f"get_services {sid}")
+    return SERVICES
+
+
+@sio.event(namespace="/service")
+async def connect(sid, environ):
+    print(f"connect /service {sid}")
+
+
 @sio.event
 async def ping(sid):
     return "pong"
@@ -141,7 +152,7 @@ def main():
     zeroconf.register_service(info)
     browser = ServiceBrowser(zeroconf, "_http._tcp.local.", handlers=[on_service_state_change])
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, ssl_keyfile="api/cert/rl-stock.local.key", ssl_certfile="api/cert/rl-stock.local.crt")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
     browser.cancel()
 
