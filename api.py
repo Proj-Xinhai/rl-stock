@@ -6,6 +6,7 @@ import socket
 import socketio
 from typing import Any
 from time import sleep
+import os
 
 from multiprocessing import Process
 
@@ -162,6 +163,9 @@ def main():
 
 
 if __name__ == "__main__":
+    if not os.path.exists('tasks/works'):
+        os.makedirs('tasks/works')
+
     p_main = Process(target=main)
     p_main.start()
 
