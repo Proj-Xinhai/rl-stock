@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 from environment.trade_new import Env, TensorboardCallback
 
 from api.util.load_task import load_task
-from api.works import set_work_timeline
+from api.works import set_work_timeline, set_evaluation
 
 
 def run_work(uuid: str):
@@ -76,6 +76,21 @@ def run_work(uuid: str):
                 obs, info = env.reset()
 
         set_work_timeline(uuid, 'test', 2, '')
+
+        try:
+            set_evaluation(uuid, {
+                'name': 'roi_net',
+                'value': info['net'] / info['cost']
+            })
+            set_evaluation(uuid, {
+                'name': 'roi_net_exclude_settlement',
+                'value': info['net_exclude_settlement'] / info['cost']
+            })
+        except ZeroDivisionError:
+            set_evaluation(uuid, {
+                'name': 'zero_division_error',
+                'value': -1
+            })
 
         writer.close()
     except Exception as e:

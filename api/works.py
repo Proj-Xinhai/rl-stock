@@ -36,6 +36,7 @@ def create_work(task_name: str, num_work: int):
                     'status': 0,
                     'detail': ''
                 }],
+                'evaluation': []
             }
             json.dump(args, f)
     return True, 'success', ''
@@ -100,6 +101,7 @@ def list_works():
             'status': args['status'],
             'detail': args['detail'],
             'timeline': args['timeline'],
+            'evaluation': args['evaluation'],
             'date': datetime.fromtimestamp(os.path.getctime(f'tasks/works/{t}.json')).strftime("%Y-%m-%d %H:%M:%S"),
         })
 
@@ -179,6 +181,18 @@ def get_scalar(uuid: str, ignores: dict = None):
         data['test'] = test_temp.to_dict('records')
 
     return data
+
+
+def set_evaluation(uuid: str, evaluation: dict):
+    with open(f'tasks/works/{uuid}.json', 'r') as f:
+        args = json.load(f)
+
+    args['evaluation'].append(evaluation)
+
+    with open(f'tasks/works/{uuid}.json', 'w') as f:
+        json.dump(args, f)
+
+    return True, 'success', ''
 
 
 if __name__ == '__main__':

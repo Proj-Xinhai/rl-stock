@@ -50,6 +50,7 @@ class Env(gym.Env):
         self.net = 0
         self.last_net = 0
         self.net_exclude_settlement = 0
+        self.cost_total = 0
 
         '''
         正規化器
@@ -144,6 +145,7 @@ class Env(gym.Env):
                     # 淨損益計算
                     if buy_or_sell:
                         self.cost = (real_close * self.trade + self.cost * self.hold) / (self.trade + self.hold)
+                        self.cost_total += real_close * self.trade
                     else:
                         self.net += (real_close - self.cost) * self.trade
                         self.net_exclude_settlement += (real_close - self.cost) * self.trade
@@ -168,6 +170,7 @@ class Env(gym.Env):
 
         return obs.to_numpy().astype(np.float32), reward, done, False, \
             {
+                'cost': self.cost_total,
                 'hold': self.hold,
                 'holding_count': self.holding_count,
                 'net': self.net,
