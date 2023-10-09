@@ -15,6 +15,7 @@ from api.list_algorithm import list_algorithm
 from api.list_helper import list_helper
 from api.worker import run_work
 from api.util.network import get_local_ip
+from api.util.get_git_hash import get_git_hash
 
 SERVICES = []
 
@@ -72,6 +73,7 @@ async def ping(sid):
 
 @sio.event
 async def connect(sid, environ):
+    await sio.emit("git_version", get_git_hash(), room=sid)
     await sio.emit("update_tasks", tasks.list_tasks(), room=sid)
     await sio.emit("update_works", works.list_works(), room=sid)
     await sio.emit("update_helper", list_helper(), room=sid)
