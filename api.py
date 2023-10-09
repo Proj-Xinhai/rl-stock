@@ -14,27 +14,9 @@ import api.works as works
 from api.list_algorithm import list_algorithm
 from api.list_helper import list_helper
 from api.worker import run_work
+from api.util.network import get_local_ip
 
 SERVICES = []
-
-
-def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    ip = '127.0.0.1'
-
-    try:
-        s.connect(("192.255.255.255", 1))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-
-    return ip
-
-
-def check_port(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(("localhost", port)) == 0
 
 
 def on_service_state_change(zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange):
