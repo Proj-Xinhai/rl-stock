@@ -1,4 +1,4 @@
-import fastapi
+from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceStateChange
@@ -51,14 +51,12 @@ def on_service_state_change(zeroconf: Zeroconf, service_type: str, name: str, st
                 SERVICES.remove(info.server.strip('.'))
 
 
-app = fastapi.FastAPI()
+app = FastAPI()
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 sio_asgi_app: Any = socketio.ASGIApp(sio, app)
 
 app.add_route("/socket.io/", route=sio_asgi_app, methods=["GET", "POST"])
 app.add_websocket_route("/socket.io/", sio_asgi_app)
-
-origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -138,6 +136,25 @@ async def get_scalar(sid, data):
     return works.get_scalar(**data)
 
 
+def worker():
+    w = None
+    try:
+        while True:
+            for w in works.list_works():
+                if w['status'] == 0:
+                    works.set_work_status(w['id'], 1, 'start running')
+                    status, msg, detail = run_work(w['id'])
+                    if status:
+                        works.set_work_status(w['id'], 2, 'finished')
+                    else:
+                        works.set_work_status(w['id'], -1, detail)
+
+            print("waiting for 10 seconds")
+            sleep(10)
+    except KeyboardInterrupt:
+        print("worker stopped")
+
+
 def main():
     info = ServiceInfo(
         "_http._tcp.local.",
@@ -158,29 +175,6 @@ def main():
 
     zeroconf.unregister_service(info)
     zeroconf.close()
-
-
-def worker():
-    w = None
-    try:
-        while True:
-            for w in works.list_works():
-                if w['status'] == 0:
-                    works.set_work_status(w['id'], 1, 'start running')
-                    status, msg, detail = run_work(w['id'])
-                    if status:
-                        works.set_work_status(w['id'], 2, 'finished')
-                    else:
-                        works.set_work_status(w['id'], -1, detail)
-
-            print("waiting for 10 seconds")
-            sleep(10)
-    except KeyboardInterrupt:
-        print("worker stopped")
-    # except Exception as e:
-    #     if w is not None:
-    #         task.set_work_status(w['id'], -1, str(e))
-    #     print(e)
 
 
 if __name__ == "__main__":
