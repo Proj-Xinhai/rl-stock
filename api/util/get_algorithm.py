@@ -3,7 +3,7 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 import typing
 
 
-def get_algorithm(algorithm: str) -> typing.Optional[BaseAlgorithm | None]:
+def get_algorithm(algorithm: str) -> typing.Optional[BaseAlgorithm]:
     if algorithm in importlib.import_module('stable_baselines3').__dict__:
         return importlib.import_module('stable_baselines3').__dict__[algorithm]
     elif algorithm in importlib.import_module('sb3_contrib').__dict__:
