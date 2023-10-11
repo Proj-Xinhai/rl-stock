@@ -1,12 +1,12 @@
 from ast import literal_eval
 from typeguard import check_type, TypeCheckError
-from typing import Tuple
+from typing import Tuple, Union
 
 from api.util.get_algorithm import get_algorithm
 
 
-def eval_args(algorithm: str, algorithm_args: dict, learn_args: dict) -> (
-        tuple[None, None, str, str] | tuple[dict, dict, None, None]):
+def eval_args(algorithm: str, algorithm_args: dict, learn_args: dict) -> Union[(
+        Tuple[None, None, str, str], Tuple[dict, dict, None, None])]:
     sb3 = get_algorithm(algorithm)
     if sb3 is None:
         return None, None, 'algorithm', 'algorithm not found'
