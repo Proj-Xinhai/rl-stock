@@ -7,6 +7,7 @@ from typing import Tuple, Optional
 from api.util.load_task import load_task
 from api.list_helper import list_helper
 from api.util.eval_args import eval_args
+from api.util.get_algorithm import get_algorithm
 
 
 def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dict, helper: str) -> Tuple[bool, str, str]:
@@ -38,6 +39,16 @@ def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dic
             i += 1
         name = f'{name}_{i}'
         args['name'] = name
+
+    # try to inistialize task
+    try:
+        sb3 = get_algorithm(algorithm)
+        if sb3 is None:
+            return False, 'algorithm', 'algorithm not found'
+        else:
+            sb3(**algorithm_args)
+    except Exception as e:
+        return False, 'algorithm_args', str(e)
 
     # write to file
     with open(f'tasks/{name}.json', 'w') as f:
