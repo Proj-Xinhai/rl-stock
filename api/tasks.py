@@ -3,11 +3,13 @@ import re
 import json
 from datetime import datetime
 from typing import Tuple, Optional
+import importlib
 
 from api.util.load_task import load_task
 from api.list_helper import list_helper
 from api.util.eval_args import eval_args
 from api.util.get_algorithm import get_algorithm
+from environment.trade_new import Env
 
 
 def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dict, helper: str) -> Tuple[bool, str, str]:
@@ -46,7 +48,16 @@ def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dic
         if sb3 is None:
             return False, 'algorithm', 'algorithm not found'
         else:
-            sb3(**algorithm_args)
+            h = importlib.import_module('util.helper.' + args['helper']).__dict__['EXPORT']()
+            env = Env(
+                train=True,
+                data_getter=h.data_getter,
+                data_preprocess=h.data_preprocess,
+                action_decoder=h.action_decoder,
+                observation_space=h.observation_space,
+                action_space=h.action_space
+            )
+            sb3(**algorithm_args, env=env)
     except Exception as e:
         return False, 'algorithm_args', str(e)
 
