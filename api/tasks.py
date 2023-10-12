@@ -2,7 +2,7 @@ import os
 import re
 import json
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Optional
 
 from api.util.load_task import load_task
 from api.list_helper import list_helper
@@ -82,6 +82,14 @@ def list_tasks() -> list:
         })
 
     return tasks
+
+
+def export_task(name: str) -> dict:
+    if os.path.exists(f'tasks/{name}.json'):
+        with open(f'tasks/{name}.json', 'r') as f:
+            return json.load(f)
+    else:
+        return {}
 
 
 if __name__ == '__main__':

@@ -121,6 +121,11 @@ async def get_scalar(sid, data):
     return works.get_scalar(**data)
 
 
+@sio.event
+async def export_task(sid, data):
+    return tasks.export_task(data)
+
+
 def worker():
     w = None
     try:
