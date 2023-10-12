@@ -13,7 +13,8 @@ def list_algorithm():
             if 'policy' in v.__init__.__code__.co_varnames:
                 algorithms.append({
                     'name': k,
-                    'description': v.__doc__
+                    'description': v.__doc__,
+                    'args': v.__init__.__code__.co_varnames
                 })
 
     for k, v in sb3_contrib.items():
@@ -21,7 +22,8 @@ def list_algorithm():
             if 'policy' in v.__init__.__code__.co_varnames:
                 algorithms.append({
                     'name': k,
-                    'description': v.__doc__
+                    'description': v.__doc__,
+                    'args': v.__init__.__code__.co_varnames
                 })
 
     return algorithms
