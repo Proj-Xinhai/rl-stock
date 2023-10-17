@@ -6,7 +6,7 @@ import importlib
 def list_helper():
     files = os.listdir('util/helper')
     files = [f for f in files if not re.match(r'__.*__', f)]
-    files = [f[:-3] for f in files if f.endswith('.py')]
+    files = [f[:-3] for f in files if f.endswith('.py') and not f.startswith('_')]
 
     helpers = []
 
