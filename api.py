@@ -126,6 +126,11 @@ async def export_task(sid, data):
     return tasks.export_task(data)
 
 
+@sio.event
+async def export_work(sid, data):
+    return works.export_work(data)
+
+
 def worker():
     w = None
     try:

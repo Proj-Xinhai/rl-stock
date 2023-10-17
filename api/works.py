@@ -1,3 +1,4 @@
+import io
 import os
 import re
 import json
@@ -6,6 +7,7 @@ from uuid import uuid4
 from time import time
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 import pandas as pd
+import zipfile
 
 
 def create_work(task_name: str, num_work: int):
@@ -193,6 +195,25 @@ def set_evaluation(uuid: str, evaluation: dict):
         json.dump(args, f)
 
     return True, 'success', ''
+
+
+def export_work(uuid: str):
+    if os.path.exists(f'tasks/works/{uuid}.json'):
+        with open(f'tasks/works/{uuid}.json', 'r') as f:
+            f = json.load(f)
+            if f['status'] != 2 or not os.path.exists(f'tasks/works/uuid'):
+                return False, 'status', 'work is failed or not yet finished'
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'a', zipfile.ZIP_DEFLATED, False) as zf:
+            zf.write(f'tasks/works/{uuid}.json', arcname=f'{uuid}.json')
+            zf.write(f'tasks/works/{uuid}/{uuid}', arcname=f'{uuid}/{uuid}')
+
+        # buffer.seek(0)
+        return True, 'success', buffer.getbuffer()
+
+    else:
+        return False, 'uuid', f'`{uuid}` not found'
 
 
 if __name__ == '__main__':
