@@ -207,16 +207,17 @@ def export_work(uuid: str):
     if os.path.exists(f'tasks/works/{uuid}.json'):
         with open(f'tasks/works/{uuid}.json', 'r') as f:
             f = json.load(f)
-            if f['status'] != 2 or not os.path.exists(f'tasks/works/uuid'):
+            if f['status'] != 2 or not os.path.exists(f'tasks/works/{uuid}'):
                 return False, 'status', 'work is failed or not yet finished'
 
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'a', zipfile.ZIP_DEFLATED, False) as zf:
             zf.write(f'tasks/works/{uuid}.json', arcname=f'{uuid}.json')
-            zf.write(f'tasks/works/{uuid}/{uuid}', arcname=f'{uuid}/{uuid}')
+            for root, dirs, files in os.walk(f'tasks/works/{uuid}'):
+                for file in files:
+                    zf.write(os.path.join(root, file), arcname=os.path.join(root, file)[len(f'tasks/works') + 1:])
 
-        # buffer.seek(0)
-        return True, 'success', buffer.getbuffer()
+        return True, 'success', buffer.getvalue()
 
     else:
         return False, 'uuid', f'`{uuid}` not found'
