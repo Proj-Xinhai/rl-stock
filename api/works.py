@@ -107,7 +107,7 @@ def list_works():
             'date': datetime.fromtimestamp(os.path.getctime(f'tasks/works/{t}.json')).strftime("%Y-%m-%d %H:%M:%S"),
         })
 
-    return works
+    return sorted(works, key=lambda x: x['date'], reverse=False)
 
 
 def get_scalar(uuid: str, ignores: dict = None):
