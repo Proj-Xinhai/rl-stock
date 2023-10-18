@@ -5,7 +5,7 @@ from typing import Tuple, Optional
 def get_git_hash() -> Tuple[Optional[str], Optional[str]]:
     try:
         repo = git.Repo(search_parent_directories=True)
-        return repo.active_branch.object.name, repo.active_branch.commit.hexsha
+        return repo.active_branch.commit.hexsha, repo.active_branch.name
     except git.exc.InvalidGitRepositoryError:
         return None, None
 
