@@ -138,7 +138,7 @@ def get_scalar(uuid: str, gets=None):
                         'step': df['step'],
                         'value': df['value']
                     }
-                )])
+                )]).ffill()
 
             train_temp = train_temp.groupby(['tag'])[['step', 'value']].agg({
                 'step': lambda x: tuple(x),  # to make it can be set as index
@@ -152,7 +152,6 @@ def get_scalar(uuid: str, gets=None):
 
             data['train'] = train_temp.to_dict('records')
     except Exception as e:
-        print(e)
         data['train'] = []
 
     try:
@@ -173,7 +172,7 @@ def get_scalar(uuid: str, gets=None):
                         'step': df['step'],
                         'value': df['value']
                     }
-                )])
+                )]).ffill()
 
             test_temp = test_temp.groupby(['tag'])[['step', 'value']].agg({
                 'step': lambda x: tuple(x),  # to make it can be set as index
@@ -187,7 +186,6 @@ def get_scalar(uuid: str, gets=None):
 
             data['test'] = test_temp.to_dict('records')
     except Exception as e:
-        print(e)
         data['test'] = []
 
     return data
