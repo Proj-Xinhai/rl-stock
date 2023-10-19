@@ -31,7 +31,7 @@ class HodgepodgeHelper(BasicPipelineHelper):
                 np.ones(1),  # ADX
                 np.array([np.inf])  # 持有量
             ])]),
-            shape=(1, 1 + 7 + 4 + 3 + 1 + 1 + 1 + 1 + 1),
+            shape=(1, 1 + 7 + 4 + 3 + 1 + 1 + 1 + 1),
             # 1 收盤價, 7: 法人買賣超, 4: SMA, 3: MACD, 1: RSI, 1: CCI, 1: ADX, 1: 持有量
             dtype=np.float32
         )
@@ -84,6 +84,9 @@ class HodgepodgeHelper(BasicPipelineHelper):
                      'CCI',  # CCI
                      'ADX'  # ADX
                      ]]
+
+        # 補空值
+        data = data.fillna(0)
 
         return data
 
