@@ -13,8 +13,10 @@ from multiprocessing import Process
 import api.tasks as tasks
 import api.works as works
 from api.list_algorithm import list_algorithm
-from api.list_helper import list_helper
-from api.worker import run_work
+# from api.list_helper import list_helper
+from api.list_data_locator import list_data_locator
+# from api.worker import run_work
+from worker.worker import worker
 from api.util.network import get_local_ip
 from api.util.get_git_hash import get_git_hash
 
@@ -77,7 +79,8 @@ async def connect(sid, environ):
     await sio.emit("git_version", get_git_hash(), room=sid)
     await sio.emit("update_tasks", tasks.list_tasks(), room=sid)
     await sio.emit("update_works", works.list_works(), room=sid)
-    await sio.emit("update_helper", list_helper(), room=sid)
+    # await sio.emit("update_helper", list_helper(), room=sid)
+    await sio.emit("update_data_locator", list_data_locator(), room=sid)
     await sio.emit("update_algorithm", list_algorithm(), room=sid)
     print(f"connect {sid}")
 
@@ -112,7 +115,8 @@ async def create_work(sid, data):
 async def update_all(sid):
     await sio.emit("update_tasks", tasks.list_tasks(), room=None)
     await sio.emit("update_works", works.list_works(), room=None)
-    await sio.emit("update_helper", list_helper(), room=None)
+    # await sio.emit("update_helper", list_helper(), room=None)
+    await sio.emit("update_data_locator", list_data_locator(), room=sid)
     await sio.emit("update_algorithm", list_algorithm(), room=None)
 
 
@@ -131,14 +135,13 @@ async def export_work(sid, data):
     return works.export_work(data)
 
 
-def worker():
-    w = None
+def run_worker():
     try:
         while True:
             for w in works.list_works():
                 if w['status'] == 0:
                     works.set_work_status(w['id'], 1, 'start running')
-                    status, msg, detail = run_work(w['id'])
+                    status, msg, detail = worker(w['id'])
                     if status:
                         works.set_work_status(w['id'], 2, 'finished')
                     else:
@@ -179,7 +182,7 @@ if __name__ == "__main__":
     p_main = Process(target=main)
     p_main.start()
 
-    p_worker = Process(target=worker)
+    p_worker = Process(target=run_worker)
     p_worker.start()
 
     p_main.join()

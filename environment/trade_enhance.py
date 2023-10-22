@@ -27,7 +27,7 @@ class InfoContainer(object):
 
 class Env(gym.Env):
     def __init__(self,
-                 data_locater: Callable,
+                 data_locator: Callable,
                  index_path: str = 'data/ind.csv',
                  data_root: str = 'data/test',
                  random_state: Optional[int] = None):
@@ -44,10 +44,10 @@ class Env(gym.Env):
         self.index_path = index_path
         self.data_root = data_root
         self.random_state = random_state
-        self.data_getter = data_locater(index_path=self.index_path,
-                                        data_root=self.data_root,
-                                        random_state=self.random_state)
-        self.data = self.data_getter.next()
+        self.data_locator = data_locator(index_path=self.index_path,
+                                         data_root=self.data_root,
+                                         random_state=self.random_state)
+        self.data = self.data_locator.next()
         self.info = InfoContainer()
 
         """
@@ -80,13 +80,13 @@ class Env(gym.Env):
 
     def reset(self, seed=None, *args, **kwargs) -> tuple[np.ndarray, dict]:
         # 理論上，這裡的 observation 會與重置前的 observation 相同 (offset 相同)
-        print(f'reset: {self.data_getter.get_index()}')
+        print(f'reset: {self.data_locator.get_index()}')
 
         self.info.reset()  # 重置部分資訊
 
         observation = self._locate_data(self.info.offset)
         info = {
-            'stock_num': self.data_getter.get_index(),
+            'stock_num': self.data_locator.get_index(),
         }
 
         return observation.to_numpy().astype(np.float32), info
@@ -150,18 +150,13 @@ class Env(gym.Env):
                 if self.info.balance > self.info.default_balance:  # 如果最終資產大於初始資產，給予較高獎勵
                     reward = 10
 
-            self.data = self.data_getter.next()  # 獲取資料
+            self.data = self.data_locator.next()  # 獲取資料
             self.info.offset = 0  # 資料定位歸零
         else:
             self.info.offset += 1  # 下移資料定位 (換日)
 
         observation = self._locate_data(self.info.offset).to_numpy().astype(np.float32)
         info = {
-            'balance': self.info.balance,
-            'cost': self.info.cost_total,
-            'hold': self.info.hold,
-            'holding_count': self.info.holding_count,
-            'net': self.info.net,
             'finish': False  # TODO: 晚點改
         }
 
@@ -176,10 +171,16 @@ class TensorboardCallback(BaseCallback):
         super(TensorboardCallback, self).__init__(verbose)
 
     def _on_step(self) -> bool:
-        self.logger.record('env/balance', self.training_env.get_attr('info')[0].balance)
-        self.logger.record('env/hold', self.training_env.get_attr('info')[0].hold)
-        self.logger.record('env/holding_count', self.training_env.get_attr('info')[0].holding_count)
-        self.logger.record('env/net', self.training_env.get_attr('info')[0].net)
+        info = self.training_env.get_attr('info')[0]
+        unrealized_gain_loss = info.hold * self.training_env.get_attr('data')[0].iloc[info.offset]['Close']
+        roi = (info.balance - info.default_balance) / info.default_balance
+        roi_unrealized = (info.balance + unrealized_gain_loss - info.default_balance) / info.default_balance
+        self.logger.record('env/balance', info.balance)
+        self.logger.record('env/hold', info.hold)
+        self.logger.record('env/holding_count', info.holding_count)
+        self.logger.record('env/net', info.net)
+        self.logger.record('env/roi', roi)
+        self.logger.record('env/roi_unrealized', roi_unrealized)
         return True
 
 

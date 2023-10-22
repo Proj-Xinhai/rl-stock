@@ -1,6 +1,6 @@
 import importlib
-from abc import ABCMeta
 from typing import Optional
+from abc import ABCMeta
 
 
 def get_algorithm(algorithm: str) -> Optional[ABCMeta]:

@@ -1,4 +1,4 @@
-from util.BasicDataLocator import BasicDataLocator
+from util.basic_data_locator import BasicDataLocator
 import pandas as pd
 import talib
 
@@ -60,6 +60,9 @@ class HodgepodgeLocator(BasicDataLocator):
 
         return data
 
+
+EXPORT = HodgepodgeLocator
+DESCRIPT = 'Hodgepodge Locator'
 
 if __name__ == '__main__':
     raise NotImplementedError('this file not meant to be executed')

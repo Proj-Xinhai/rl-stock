@@ -6,13 +6,18 @@ from typing import Tuple, Optional
 import importlib
 
 from api.util.load_task import load_task
-from api.list_helper import list_helper
+from api.list_data_locator import list_data_locator
 from api.util.eval_args import eval_args
 from api.util.get_algorithm import get_algorithm
-from environment.trade_new import Env
+from environment.trade_enhance import Env  # TODO: maybe can choose env by setting
 
 
-def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dict, helper: str) -> Tuple[bool, str, str]:
+def create_task(name: str,
+                algorithm: str,
+                algorithm_args: dict,
+                learn_args: dict,
+                data_locator: str,
+                random_state: Optional[int]) -> Tuple[bool, str, str]:
     # check if name is valid
     if name == '':
         return False, 'name', f'cannot be empty'
@@ -22,16 +27,17 @@ def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dic
     if error is not None:
         return False, error, detail
 
-    # check if helper is valid (in general, this will not be invalid)
-    if next((h for h in list_helper() if h['name'] == helper), None) is None:
-        return False, 'helper', f'`{helper}` not found'
+    # check if data locator is valid (in general, this will not be invalid)
+    if next((loc for loc in list_data_locator() if loc['name'] == data_locator), None) is None:
+        return False, 'data_locator', f'`{data_locator}` not found'
 
     args = {
         'name': name,  # str
         'algorithm': algorithm,  # class name like A2C
         'algorithm_args': algorithm_args,  # dict
         'learn_args': learn_args,  # dict
-        'helper': helper  # .py file
+        'data_locator': data_locator,  # .py file
+        'random_state': None if random_state == '' else random_state  # int or null
     }
 
     # first check if task already exists, if so, add number
@@ -48,15 +54,8 @@ def create_task(name: str, algorithm: str, algorithm_args: dict, learn_args: dic
         if sb3 is None:
             return False, 'algorithm', 'algorithm not found'
         else:
-            h = importlib.import_module('util.helper.' + args['helper']).__dict__['EXPORT']()
-            env = Env(
-                train=True,
-                data_getter=h.data_getter,
-                data_preprocess=h.data_preprocess,
-                action_decoder=h.action_decoder,
-                observation_space=h.observation_space,
-                action_space=h.action_space
-            )
+            loc = importlib.import_module('util.data_locator.' + data_locator).__dict__['EXPORT']
+            env = Env(data_locator=loc)
             sb3(**algorithm_args, env=env)
     except Exception as e:
         return False, 'algorithm_args', str(e)
@@ -91,16 +90,15 @@ def list_tasks() -> list:
         with open(f'tasks/{t}.json', 'r') as f:
             args = json.load(f)
 
-        task = load_task(t)['helper']()
-        data_example = task.data_getter('2330')
-        preprocess_example, _ = task.data_preprocess(task.data_getter('2330'))
+        task = load_task(t)
+        loc = task['data_locator'](index_path='data/ind.csv', data_root='data/test', random_state=task['random_state'])
+        data_example = loc.next().tail(5).to_csv()
 
         tasks.append({
             'name': t,
             'args': args,
             'date': datetime.fromtimestamp(os.path.getctime(f'tasks/{t}.json')).strftime("%Y-%m-%d %H:%M:%S"),
-            'data_example': data_example.head(5).to_csv(),
-            'preprocess_example': preprocess_example.head(5).to_csv()
+            'data_example': data_example
         })
 
     return tasks
