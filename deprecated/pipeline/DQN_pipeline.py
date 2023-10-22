@@ -1,7 +1,7 @@
 from stable_baselines3 import DQN
-from util.pipeline import Pipeline
+from deprecated.pipeline import Pipeline
 
-from NormalAndSMAHelper import NormalHelper, SMAHelper
+from NormalAndSMAHelper import SMAHelper
 
 
 if __name__ == '__main__':

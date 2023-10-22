@@ -1,6 +1,6 @@
 import json
 from torch.utils.tensorboard import SummaryWriter
-from environment.trade_new import Env, TensorboardCallback
+from environment.trade_enhance import Env, TensorboardCallback
 
 from api.util.load_task import load_task
 from api.works import set_work_timeline, set_evaluation
@@ -15,17 +15,10 @@ def run_work(uuid: str):
     algorithm = task['algorithm']
     algorithm_args = task['algorithm_args']
     learn_args = task['learn_args']
-    helper = task['helper']()
+    data_locator = task['data_locator']
 
     try:
-        env = Env(
-            train=True,
-            data_getter=helper.data_getter,
-            data_preprocess=helper.data_preprocess,
-            action_decoder=helper.action_decoder,
-            observation_space=helper.observation_space,
-            action_space=helper.action_space
-        )
+        env = Env(data_locater=data_locator)
 
         set_work_timeline(uuid, 'train', 1, '')
 
@@ -43,14 +36,7 @@ def run_work(uuid: str):
 
     try:
         # test
-        env = Env(
-            train=False,
-            data_getter=helper.data_getter,
-            data_preprocess=helper.data_preprocess,
-            action_decoder=helper.action_decoder,
-            observation_space=helper.observation_space,
-            action_space=helper.action_space
-        )
+        env = Env(data_locater=data_locator, data_root='data/test')
 
         writer = SummaryWriter(f'tasks/works/{uuid}/{uuid}_test')
 

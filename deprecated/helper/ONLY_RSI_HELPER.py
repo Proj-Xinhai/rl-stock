@@ -4,16 +4,16 @@ import gymnasium.spaces as spaces
 import talib
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Any
-from util.pipeline_helper import BasicPipelineHelper
+from deprecated.pipeline_helper import BasicPipelineHelper
 
 
-class OnlyMACDHelper(BasicPipelineHelper):
+class OnlyRSIHelper(BasicPipelineHelper):
     def __init__(self):
-        super(OnlyMACDHelper, self).__init__()  # 繼承父類別的__init__()
+        super(OnlyRSIHelper, self).__init__()  # 繼承父類別的__init__()
         self.observation_space = spaces.Box(
-            low=np.array([np.concatenate([np.zeros(1), np.array([-np.inf] * 3), np.array([-np.inf])])]),
-            high=np.array([np.concatenate([np.ones(1), np.array([np.inf] * 3), np.array([np.inf])])]),
-            shape=(1, 1 + 3 + 1),  # 1 收盤價, 3: MACD, 1: 持有量
+            low=np.array([np.concatenate([np.zeros(1), np.zeros(1), np.array([-np.inf])])]),
+            high=np.array([np.concatenate([np.ones(1), np.ones(1), np.array([np.inf])])]),
+            shape=(1, 1 + 1 + 1),  # 1 收盤價, 1: RSI, 1: 持有量
             dtype=np.float32
         )
         self.action_space = spaces.Discrete(3)
@@ -30,9 +30,8 @@ class OnlyMACDHelper(BasicPipelineHelper):
         data = pd.concat([s], axis=1, sort=True).dropna()
 
         # 先合併完，再算技術指標 (避免dropna把開頭的資料刪掉)
-        # MACD
-        data['MACD'], data['MACDsignal'], data['MACDhist'] = (
-            talib.MACD(data['Close'], fastperiod=12, slowperiod=26, signalperiod=9))
+        # RSI
+        data['RSI'] = talib.RSI(data['Close'], timeperiod=14)
 
         """
         補空值
@@ -48,11 +47,14 @@ class OnlyMACDHelper(BasicPipelineHelper):
         # 收盤價
         data['Close'] = scaler.transform(data['Close'].values.reshape(-1, 1)).reshape(-1)
 
+        # RSI
+        data['RSI'] = data['RSI'] / 100  # RSI 本身是 0~100 的數值，除以 100 使其變成 0~1
+
         return data, scaler
 
     def action_decoder(self, action: Any) -> Any:
         return bool(action) if action != 2 else None
 
 
-EXPORT = OnlyMACDHelper
-DESCRIPT = 'macd data only'
+EXPORT = OnlyRSIHelper
+DESCRIPT = 'rsi data only'

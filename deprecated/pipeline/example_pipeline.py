@@ -5,9 +5,9 @@ import gymnasium.spaces as spaces
 import talib
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Any
-from util.pipeline import Pipeline
+from deprecated.pipeline import Pipeline
 
-from util.pipeline_helper import BasicPipelineHelper
+from deprecated.pipeline_helper import BasicPipelineHelper
 
 
 class SMAHelper(BasicPipelineHelper):
