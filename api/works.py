@@ -57,7 +57,7 @@ def set_work_timeline(uuid: str, name: str, status: int, detail: str):
             t['status'] = status
             t['detail'] = detail
 
-    set_work_status(uuid, status, detail)
+    # set_work_status(uuid, status, detail)
 
     with open(f'tasks/works/{uuid}.json', 'w') as f:
         json.dump(args, f)

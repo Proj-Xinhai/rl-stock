@@ -7,6 +7,7 @@ import socketio
 from typing import Any
 from time import sleep
 import os
+import asyncio
 
 from multiprocessing import Process
 
@@ -79,7 +80,6 @@ async def connect(sid, environ):
     await sio.emit("git_version", get_git_hash(), room=sid)
     await sio.emit("update_tasks", tasks.list_tasks(), room=sid)
     await sio.emit("update_works", works.list_works(), room=sid)
-    # await sio.emit("update_helper", list_helper(), room=sid)
     await sio.emit("update_data_locator", list_data_locator(), room=sid)
     await sio.emit("update_algorithm", list_algorithm(), room=sid)
     print(f"connect {sid}")
@@ -115,8 +115,7 @@ async def create_work(sid, data):
 async def update_all(sid):
     await sio.emit("update_tasks", tasks.list_tasks(), room=None)
     await sio.emit("update_works", works.list_works(), room=None)
-    # await sio.emit("update_helper", list_helper(), room=None)
-    await sio.emit("update_data_locator", list_data_locator(), room=sid)
+    await sio.emit("update_data_locator", list_data_locator(), room=None)
     await sio.emit("update_algorithm", list_algorithm(), room=None)
 
 
