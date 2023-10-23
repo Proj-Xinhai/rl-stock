@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from typing import Tuple, Optional
 import importlib
+from pathvalidate import sanitize_filename
 
 from api.util.load_task import load_task
 from api.list_data_locator import list_data_locator
@@ -40,6 +41,8 @@ def create_task(name: str,
         'random_state': None if random_state == '' else random_state  # int or null
     }
 
+    # check if name have invalid characters
+    name = sanitize_filename(name)
     # first check if task already exists, if so, add number
     if os.path.exists(f'tasks/{name}.json'):
         i = 1
