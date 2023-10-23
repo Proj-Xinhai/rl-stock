@@ -172,8 +172,13 @@ class TensorboardCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         info = self.training_env.get_attr('info')[0]
-        unrealized_gain_loss = info.hold * self.training_env.get_attr('data')[0].iloc[info.offset]['Close']
-        roi = (info.balance - info.default_balance) / info.default_balance
+        rollback_cost = info.hold * info.cost  # 把持有成本加回去
+        unrealized_gain_loss = info.hold * self.training_env.get_attr('data')[0].iloc[info.offset]['Close']  # 未實現損益
+        # 未實現損益 - 持有成本 = 未實現淨損益 (期中任何時機皆可)
+        # 帳面餘額 - 期初餘額 = 已實現淨損益 (期末，此時應不存在持有成本或未實現損益)
+        # roi 為 (帳面餘額 + 持有成本 - 期初餘額) / 期初餘額 = 已實現報酬率
+        roi = (info.balance + rollback_cost - info.default_balance) / info.default_balance
+        # roi_unrealized 為 (帳面餘額 + 未實現損益 - 期初餘額) / 期初餘額 = 已實現報酬率
         roi_unrealized = (info.balance + unrealized_gain_loss - info.default_balance) / info.default_balance
         self.logger.record('env/balance', info.balance)
         self.logger.record('env/hold', info.hold)
