@@ -3,6 +3,7 @@ from api.works import set_evaluation
 from typing import Callable, Optional
 from torch.utils.tensorboard import SummaryWriter
 from stable_baselines3.common.base_class import BaseAlgorithm
+import statistics
 
 
 def test(uuid: str,
@@ -41,7 +42,19 @@ def test(uuid: str,
 
             if env.data_locator.offset == len(env.data_locator.index) - 1:  # means done all stocks
                 set_evaluation(uuid, {
-                    'name': 'roi_average',
-                    'value': sum(rois) / len(rois)
+                    'name': 'roi_mean',
+                    'value': statistics.mean(rois)
+                })
+                set_evaluation(uuid, {
+                    'name': 'roi_median',
+                    'value': statistics.median(rois)
+                })
+                set_evaluation(uuid, {
+                    'name': 'roi_max',
+                    'value': max(rois)
+                })
+                set_evaluation(uuid, {
+                    'name': 'roi_min',
+                    'value': min(rois)
                 })
                 break
