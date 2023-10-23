@@ -152,8 +152,14 @@ class Env(gym.Env):
 
             self.data = self.data_locator.next()  # 獲取資料
             self.info.offset = 0  # 資料定位歸零
+
+            reward = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
         else:
             self.info.offset += 1  # 下移資料定位 (換日)
+
+            holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
+            reward = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
+        # TODO: reward 要與 _calculate_trade 的 return 配合
 
         observation = self._locate_data(self.info.offset).to_numpy().astype(np.float32)
         info = {
