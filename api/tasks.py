@@ -57,7 +57,7 @@ def create_task(name: str,
         if sb3 is None:
             return False, 'algorithm', 'algorithm not found'
         else:
-            loc = importlib.import_module('util.data_locator.' + data_locator).__dict__['EXPORT']
+            loc = importlib.import_module('data_locator.' + data_locator).__dict__['EXPORT']
             env = Env(data_locator=loc)
             sb3(**algorithm_args, env=env)
     except Exception as e:
