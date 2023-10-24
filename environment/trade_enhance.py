@@ -18,11 +18,14 @@ class InfoContainer(object):
         self.cost_total = 0  # 總成本
         self.hold = 0  # 持有量
         self.holding_count = 0  # 不動作次數
+        self.last_roi = 0  # 上一次售出的報酬率
 
     def reset(self):
         self.balance = self.default_balance
         self.cost = 0
         self.hold = 0
+        self.holding_count = 0
+        self.last_roi = 0
 
 
 class Env(gym.Env):
@@ -115,7 +118,7 @@ class Env(gym.Env):
             self.info.balance -= floor(price * trade)  # 扣除買入金額
             self.info.cost_total += floor(price * trade)  # 累計成本
             self.info.hold += trade  # 持有量增加
-            return 0
+            return 0  # TODO: 嘗試有動作給予獎勵
         else:  # Sell
             price = self._locate_data(self.info.offset)['Close']  # 賣出單價
             # self.info.cost  # 加權平均成本不會改變
@@ -124,10 +127,49 @@ class Env(gym.Env):
             self.info.net = self.info.balance - self.info.default_balance  # 損益為餘額減去初始餘額 (當次episode累計損益)
             self.info.hold -= trade  # 持有量減少
 
-            if price > self.info.cost:
+            roi = (self.info.balance - self.info.default_balance) / self.info.default_balance
+
+            if roi > self.info.last_roi:
+                self.info.last_roi = roi
                 return 5  # 有賺錢所以獎勵
             else:
-                return 0  # 沒賺錢，不給獎勵
+                self.info.last_roi = roi
+                return 0  # 沒賺錢，不給獎勵  # TODO: 嘗試有動作給予獎勵
+
+    def _calculate_terminated(self, return_by_trade: int) -> int:
+        if self.info.hold > 0:
+            price = self._locate_data(self.info.offset)['Close']  # 賣出單價
+            # 小數點以下應捨去
+            self.info.balance += floor(price * self.info.hold)  # 加回餘額
+            self.info.net = self.info.balance - self.info.default_balance  # 損益為餘額減去初始餘額 (當次episode累計損益)
+
+            roi = (self.info.balance - self.info.default_balance) / self.info.default_balance
+
+            if roi > 0:
+                if return_by_trade == 0:
+                    reward = 3  # 如果最終報酬率為正，且最後一次交易為持平，給予較少獎勵
+                else:
+                    reward = 8  # 如果最終報酬率為正，且最後一次交易非持平，給予較高獎勵
+            else:
+                reward = -1  # 如果最終報酬率為負，給予懲罰
+
+        else:
+            roi = (self.info.balance - self.info.default_balance) / self.info.default_balance
+            if roi > 0:
+                reward = 10  # 如果最終報酬率為正，給予較高獎勵
+            else:
+                reward = -5  # 如果最終報酬率為負，給予懲罰
+
+        return reward
+
+    def _calculate_reward(self, return_by_trade: int, terminated: bool = False) -> float:
+        if terminated:
+            reward = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
+        else:
+            holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
+            reward = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
+
+        return reward
 
     def step(self, action) -> tuple[np.ndarray, float, bool, bool, dict]:
         buy_or_sell, trade = self._decode_action(action)
@@ -137,29 +179,15 @@ class Env(gym.Env):
         truncated = False  # 這表示因超時導致的終止，我們不會有這種情況
 
         if terminated:  # 已經結束這檔股票的交易，進行結算
-            if self.info.hold > 0:
-                price = self._locate_data(self.info.offset)['Close']  # 賣出單價
-                # 小數點以下應捨去
-                self.info.balance += floor(price * self.info.hold)  # 加回餘額
-                self.info.net = self.info.balance - self.info.default_balance  # 損益為餘額減去初始餘額 (當次episode累計損益)
-                if price > self.info.cost and reward == 0:  # 如果最終持有價格大於平均成本，且本次沒有獲得獎勵，給予較低獎勵
-                    reward = 3  # 有賺錢所以獎勵
-                if self.info.balance > self.info.default_balance:  # 如果最終資產大於初始資產，給予較高獎勵
-                    reward += 5
-            else:
-                if self.info.balance > self.info.default_balance:  # 如果最終資產大於初始資產，給予較高獎勵
-                    reward = 10
+            reward = self._calculate_terminated(reward)  # 結算
 
             self.data = self.data_locator.next()  # 獲取資料
             self.info.offset = 0  # 資料定位歸零
-
-            reward = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
         else:
             self.info.offset += 1  # 下移資料定位 (換日)
 
-            holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
-            reward = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
         # TODO: reward 要與 _calculate_trade 的 return 配合
+        reward = self._calculate_reward(reward, terminated)
 
         observation = self._locate_data(self.info.offset).to_numpy().astype(np.float32)
         info = {
@@ -195,7 +223,7 @@ class TensorboardCallback(BaseCallback):
         return True
 
 
-DESCRIPT = "New action w/ reward by unrealized roi"
+DESCRIPT = "New action w/ reward by unrealized roi (not interact w/ return by trade)"
 
 
 if __name__ == '__main__':
