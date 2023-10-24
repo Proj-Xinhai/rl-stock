@@ -2,7 +2,7 @@
 from sb3_contrib import RecurrentPPO
 import datetime
 
-from environment.trade import Env, TensorboardCallback
+from deprecated.environment.trade import Env, TensorboardCallback
 
 if __name__ == '__main__':
     env = Env()

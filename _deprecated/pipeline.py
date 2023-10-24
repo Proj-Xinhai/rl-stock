@@ -1,5 +1,4 @@
-import datetime
-from environment.trade_new import Env, TensorboardCallback
+from deprecated.environment.trade_new import Env, TensorboardCallback
 from torch.utils.tensorboard import SummaryWriter
 
 
