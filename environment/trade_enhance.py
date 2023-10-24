@@ -195,5 +195,8 @@ class TensorboardCallback(BaseCallback):
         return True
 
 
+DESCRIPT = "New action w/ reward by unrealized roi"
+
+
 if __name__ == '__main__':
-    pass
+    raise RuntimeError('This module is not runnable!')

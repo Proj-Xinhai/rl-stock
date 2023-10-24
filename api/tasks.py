@@ -10,7 +10,7 @@ from api.util.load_task import load_task
 from api.list_data_locator import list_data_locator
 from api.util.eval_args import eval_args
 from api.util.get_algorithm import get_algorithm
-from environment.trade_enhance import Env  # TODO: maybe can choose env by setting
+from util.get_environment import get_environment
 
 
 def create_task(name: str,
@@ -18,6 +18,7 @@ def create_task(name: str,
                 algorithm_args: dict,
                 learn_args: dict,
                 data_locator: str,
+                environment: str,
                 random_state: Optional[int]) -> Tuple[bool, str, str]:
     # check if name is valid
     if name == '':
@@ -32,12 +33,17 @@ def create_task(name: str,
     if next((loc for loc in list_data_locator() if loc['name'] == data_locator), None) is None:
         return False, 'data_locator', f'`{data_locator}` not found'
 
+    # check if environment is valid (in general, this will not be invalid)
+    if not os.path.exists(f'environment/{environment}.py'):
+        return False, 'environment', f'`{environment}` not found'
+
     args = {
         'name': name,  # str
         'algorithm': algorithm,  # class name like A2C
         'algorithm_args': algorithm_args,  # dict
         'learn_args': learn_args,  # dict
         'data_locator': data_locator,  # .py file
+        'environment': environment,  # .py file
         'random_state': None if random_state == '' else random_state  # int or null
     }
 
@@ -58,7 +64,7 @@ def create_task(name: str,
             return False, 'algorithm', 'algorithm not found'
         else:
             loc = importlib.import_module('data_locator.' + data_locator).__dict__['EXPORT']
-            env = Env(data_locator=loc)
+            env = get_environment(environment)[0](data_locator=loc)
             sb3(**algorithm_args, env=env)
     except Exception as e:
         return False, 'algorithm_args', str(e)
