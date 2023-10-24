@@ -1,6 +1,6 @@
 from worker.train import train
 from worker.test import test
-from api.util.load_task import load_task
+from util.load_task import load_task
 from api.works import set_work_timeline
 import json
 

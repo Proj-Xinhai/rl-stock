@@ -2,7 +2,7 @@ from ast import literal_eval
 from typeguard import check_type, TypeCheckError
 from typing import Tuple, Union
 
-from api.util.get_algorithm import get_algorithm
+from util.get_algorithm import get_algorithm
 
 
 def eval_args(algorithm: str, algorithm_args: dict, learn_args: dict) -> Union[(

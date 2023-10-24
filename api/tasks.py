@@ -6,10 +6,10 @@ from typing import Tuple, Optional
 import importlib
 from pathvalidate import sanitize_filename
 
-from api.util.load_task import load_task
+from util.load_task import load_task
 from api.list_data_locator import list_data_locator
-from api.util.eval_args import eval_args
-from api.util.get_algorithm import get_algorithm
+from util.eval_args import eval_args
+from util.get_algorithm import get_algorithm
 from util.get_environment import get_environment
 
 

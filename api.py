@@ -16,8 +16,8 @@ from api.list_algorithm import list_algorithm
 from api.list_data_locator import list_data_locator
 from api.list_environment import list_environment
 from worker.worker import worker
-from api.util.network import get_local_ip
-from api.util.get_git_hash import get_git_hash
+from util.network import get_local_ip
+from util.get_git_hash import get_git_hash
 
 SERVICES = []
 

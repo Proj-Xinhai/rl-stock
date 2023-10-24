@@ -1,8 +1,8 @@
 import importlib
 import json
 
-from api.util.get_algorithm import get_algorithm
-from api.util.eval_args import eval_args
+from util.get_algorithm import get_algorithm
+from util.eval_args import eval_args
 
 
 def load_task(name: str):
