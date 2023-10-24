@@ -1,10 +1,13 @@
+from sb3_contrib import RecurrentPPO
 import numpy as np
 import pandas as pd
 import gymnasium.spaces as spaces
 import talib
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Any
-from util.pipeline_helper import BasicPipelineHelper
+from deprecated.pipeline import Pipeline
+
+from deprecated.pipeline_helper import BasicPipelineHelper
 
 
 class SMAHelper(BasicPipelineHelper):
@@ -12,7 +15,7 @@ class SMAHelper(BasicPipelineHelper):
         super(SMAHelper, self).__init__()  # 繼承父類別的__init__()
         self.observation_space = spaces.Box(
             low=np.array([np.concatenate([np.zeros(7), np.zeros(4), -np.ones(7), np.array([-np.inf])])]),
-            high=np.array([np.concatenate([np.ones(7), np.ones(4) * 4, np.ones(7), np.array([np.inf])])]),
+            high=np.array([np.concatenate([np.ones(7), np.ones(4), np.ones(7), np.array([np.inf])])]),
             shape=(1, 7 + 4 + 7 + 1),  # 7: 個股資料, 4: SMA, 7: 法人買賣超, 1: 持有量
             dtype=np.float32
         )
@@ -54,9 +57,6 @@ class SMAHelper(BasicPipelineHelper):
             for i in data[data[item].isnull()].index:
                 data.loc[i, item] = data.iloc[:data.index.get_loc(i) + 1]['Close'].mean()
 
-        # 幫SMA排名
-        data[['MA5', 'MA10', 'MA20', 'MA60']] = data[['MA5', 'MA10', 'MA20', 'MA60']].rank(axis=1, method='dense')
-
         return data
 
     def data_preprocess(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, Any]:
@@ -66,10 +66,10 @@ class SMAHelper(BasicPipelineHelper):
         data['High'] = scaler.transform(data['High'].values.reshape(-1, 1)).reshape(-1)
         data['Low'] = scaler.transform(data['Low'].values.reshape(-1, 1)).reshape(-1)
         data['Close'] = scaler.transform(data['Close'].values.reshape(-1, 1)).reshape(-1)
-        # data['MA5'] = scaler.transform(data['MA5'].values.reshape(-1, 1)).reshape(-1)
-        # data['MA10'] = scaler.transform(data['MA10'].values.reshape(-1, 1)).reshape(-1)
-        # data['MA20'] = scaler.transform(data['MA20'].values.reshape(-1, 1)).reshape(-1)
-        # data['MA60'] = scaler.transform(data['MA60'].values.reshape(-1, 1)).reshape(-1)
+        data['MA5'] = scaler.transform(data['MA5'].values.reshape(-1, 1)).reshape(-1)
+        data['MA10'] = scaler.transform(data['MA10'].values.reshape(-1, 1)).reshape(-1)
+        data['MA20'] = scaler.transform(data['MA20'].values.reshape(-1, 1)).reshape(-1)
+        data['MA60'] = scaler.transform(data['MA60'].values.reshape(-1, 1)).reshape(-1)
 
         return data, scaler
 
@@ -77,5 +77,61 @@ class SMAHelper(BasicPipelineHelper):
         return bool(action) if action != 2 else None
 
 
-EXPORT = SMAHelper
-DESCRIPT = 'SMAHelper with institutional investor and SMA'
+if __name__ == '__main__':
+    # tasks to run
+    tasks = [
+        {
+            'name': 'trade_recurrent_ppo_sma_3e-4',
+            # algorithm
+            'algorithm': RecurrentPPO,
+            'algorithm_args': {
+                'policy': 'MlpLstmPolicy',
+                'learning_rate': 3e-4
+            },
+            'learn_args': {
+                'total_timesteps': 1_000_000
+            },
+            # environment
+            'helper': SMAHelper,
+        },
+        {
+            'name': 'trade_recurrent_ppo_sma_2e-4',
+            # algorithm
+            'algorithm': RecurrentPPO,
+            'algorithm_args': {
+                'policy': 'MlpLstmPolicy',
+                'learning_rate': 2e-4
+            },
+            'learn_args': {
+                'total_timesteps': 1_000_000
+            },
+            # environment
+            'helper': SMAHelper,
+        },
+        {
+            'name': 'trade_recurrent_ppo_sma_1e-4',
+            # algorithm
+            'algorithm': RecurrentPPO,
+            'algorithm_args': {
+                'policy': 'MlpLstmPolicy',
+                'learning_rate': 1e-4
+            },
+            'learn_args': {
+                'total_timesteps': 1_000_000
+            },
+            # environment
+            'helper': SMAHelper,
+        }
+    ]
+
+    p = Pipeline(tasks)  # init pipeline
+
+    train = p.train()  # get train generator
+    test = p.test()  # get test generator
+
+    next(train)  # init train
+    next(test)  # init test
+
+    while (t := next(train)) is not None:  # do train
+        next(test)  # do test
+        print(f'task {t} finished')

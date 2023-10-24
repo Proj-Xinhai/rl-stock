@@ -3,7 +3,7 @@ import pandas as pd
 import gymnasium.spaces as spaces
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Any
-from util.pipeline_helper import BasicPipelineHelper
+from deprecated.pipeline_helper import BasicPipelineHelper
 import talib
 
 

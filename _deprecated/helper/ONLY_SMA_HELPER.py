@@ -4,16 +4,16 @@ import gymnasium.spaces as spaces
 import talib
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Any
-from util.pipeline_helper import BasicPipelineHelper
+from deprecated.pipeline_helper import BasicPipelineHelper
 
 
-class OnlyADXHelper(BasicPipelineHelper):
+class OnlySMAHelper(BasicPipelineHelper):
     def __init__(self):
-        super(OnlyADXHelper, self).__init__()  # 繼承父類別的__init__()
+        super(OnlySMAHelper, self).__init__()  # 繼承父類別的__init__()
         self.observation_space = spaces.Box(
-            low=np.array([np.concatenate([np.zeros(1), np.zeros(1), np.array([-np.inf])])]),
-            high=np.array([np.concatenate([np.ones(1), np.ones(1), np.array([np.inf])])]),
-            shape=(1, 1 + 1 + 1),  # 1 收盤價, 1: ADX, 1: 持有量
+            low=np.array([np.concatenate([np.zeros(1), np.zeros(4), np.array([-np.inf])])]),
+            high=np.array([np.concatenate([np.ones(1), np.ones(4) * 4, np.array([np.inf])])]),
+            shape=(1, 1 + 4 + 1),  # 1 收盤價, 4: SMA, 1: 持有量
             dtype=np.float32
         )
         self.action_space = spaces.Discrete(3)
@@ -23,21 +23,21 @@ class OnlyADXHelper(BasicPipelineHelper):
 
         # 個股資料
         s = pd.read_csv(f'{data_path}/個股/{stock_num}.csv').reset_index(drop=True).set_index('Date')
-        # s = s[['Close']]  # 只保留收盤價  # 先保留所有欄位供後續計算技術指標使用
+        s = s[['Close']]  # 只保留收盤價
 
         # 合併資料，並把含有空值之列刪除
         # 空值原因: 部分補班日不開盤，但是含有法人買賣超資料，此時個股資料會有空值
         data = pd.concat([s], axis=1, sort=True).dropna()
 
         # 先合併完，再算技術指標 (避免dropna把開頭的資料刪掉)
-        # ADX
-        data['ADX'] = talib.ADX(data['High'], data['Low'], data['Close'], timeperiod=14)
-
-        # 只保留收盤價與 ADX
-        data = data[['Close', 'ADX']]
+        # 平均線
+        data['MA5'] = talib.MA(data['Close'], timeperiod=5)
+        data['MA10'] = talib.MA(data['Close'], timeperiod=10)
+        data['MA20'] = talib.MA(data['Close'], timeperiod=20)
+        data['MA60'] = talib.MA(data['Close'], timeperiod=60)
 
         """
-        補空值
+        補平均線空值
         作法: 直接補0
         """
         data = data.fillna(0)
@@ -49,9 +49,8 @@ class OnlyADXHelper(BasicPipelineHelper):
         scaler.fit(data['Close'].values.reshape(-1, 1))
         # 收盤價
         data['Close'] = scaler.transform(data['Close'].values.reshape(-1, 1)).reshape(-1)
-
-        # ADX
-        data['ADX'] = data['ADX'] / 100  # ADX 本身是 0~100 的數值，除以 100 使其變成 0~1
+        # SMA
+        data[['MA5', 'MA10', 'MA20', 'MA60']] = data[['MA5', 'MA10', 'MA20', 'MA60']].rank(axis=1, method='dense')
 
         return data, scaler
 
@@ -59,5 +58,5 @@ class OnlyADXHelper(BasicPipelineHelper):
         return bool(action) if action != 2 else None
 
 
-EXPORT = OnlyADXHelper
-DESCRIPT = 'adx data only'
+EXPORT = OnlySMAHelper
+DESCRIPT = 'sma data only'

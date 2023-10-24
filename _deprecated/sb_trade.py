@@ -2,11 +2,10 @@
 This file is a copy of deprecated version of /sb_recurrent_ppo_trade.py
 This version contains balance which is not used in new version
 '''
-from stable_baselines3 import PPO, A2C
 from sb3_contrib import RecurrentPPO
 import datetime
 
-from environment.trade import Env, TensorboardCallback
+from deprecated.environment.trade import Env, TensorboardCallback
 
 MODE = 1 # 0: train, 1: test
 

@@ -1,19 +1,19 @@
-from sb3_contrib import RecurrentPPO
-from util.pipeline import Pipeline
+from stable_baselines3 import DQN
+from deprecated.pipeline import Pipeline
 
-from NormalAndSMAHelper import NormalHelper, SMAHelper
+from NormalAndSMAHelper import SMAHelper
 
 
 if __name__ == '__main__':
     # tasks to run
     tasks = [
         # {
-        #     'name': 'trade_recurrent_ppo',
+        #     'name': 'trade_dqn',
         #     # algorithm
-        #     'algorithm': RecurrentPPO,
+        #     'algorithm': DQN,
         #     'algorithm_args': {
-        #         'policy': 'MlpLstmPolicy',
-        #         'learning_rate': 3e-4
+        #         'policy': 'MlpPolicy',
+        #         'learning_rate': 1e-4
         #     },
         #     'learn_args': {
         #         'total_timesteps': 1_000_000
@@ -22,12 +22,12 @@ if __name__ == '__main__':
         #     'helper': NormalHelper,
         # },
         {
-            'name': 'trade_recurrent_ppo_sma',
+            'name': 'trade_dqn_sma',
             # algorithm
-            'algorithm': RecurrentPPO,
+            'algorithm': DQN,
             'algorithm_args': {
-                'policy': 'MlpLstmPolicy',
-                'learning_rate': 3e-4
+                'policy': 'MlpPolicy',
+                'learning_rate': 1e-4
             },
             'learn_args': {
                 'total_timesteps': 1_000_000

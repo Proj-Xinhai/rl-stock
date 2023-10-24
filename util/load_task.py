@@ -1,8 +1,8 @@
 import importlib
 import json
 
-from api.util.get_algorithm import get_algorithm
-from api.util.eval_args import eval_args
+from util.get_algorithm import get_algorithm
+from util.eval_args import eval_args
 
 
 def load_task(name: str):
@@ -15,7 +15,8 @@ def load_task(name: str):
         raise RuntimeError(f'Error in task `{name}`: {error} ({detail})')
 
     args['algorithm'] = get_algorithm(args['algorithm'])
-    args['helper'] = importlib.import_module('util.helper.' + args['helper']).__dict__['EXPORT']
+    args['data_locator'] = importlib.import_module('data_locator.' + args['data_locator']).__dict__['EXPORT']
+    args['random_state'] = None if args['random_state'] == '' else args['random_state']
 
     return args
 
