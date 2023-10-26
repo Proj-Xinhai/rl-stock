@@ -10,8 +10,9 @@ from util.get_environment import get_environment
 def test(uuid: str,
          model: BaseAlgorithm,
          data_locator: Callable,
+         environment: str,
          random_state: Optional[int] = None):
-    env, callback = get_environment('trade_enhance')
+    env, callback = get_environment(environment)
     env = env(data_locator=data_locator, data_root='data/test', random_state=random_state)
     writer = SummaryWriter(f'tasks/works/{uuid}/{uuid}_test')
 
