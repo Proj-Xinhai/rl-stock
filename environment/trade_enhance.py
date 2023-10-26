@@ -84,8 +84,14 @@ class Env(gym.Env):
     def reset(self, seed=None, *args, **kwargs) -> tuple[np.ndarray, dict]:
         # 理論上，這裡的 observation 會與重置前的 observation 相同 (offset 相同)
         print(f'reset: {self.data_locator.get_index()}')
+        print(self.info.balance)
+        print(self.info.hold)
+        print(self.info.default_balance)
 
         self.info.reset()  # 重置部分資訊
+        print(self.info.balance)
+        print(self.info.hold)
+        print(self.info.default_balance)
 
         observation = self._locate_data(self.info.offset)
         info = {

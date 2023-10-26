@@ -14,11 +14,12 @@ def worker(uuid: str):
     algorithm_args = task['algorithm_args']
     learn_args = task['learn_args']
     data_locator = task['data_locator']
+    environment = task['environment']
     random_state = task['random_state']
 
     set_work_timeline(uuid, 'train', 1, '')
     try:
-        model = train(uuid, data_locator, algorithm, algorithm_args, learn_args, random_state)
+        model = train(uuid, data_locator, environment, algorithm, algorithm_args, learn_args, random_state)
     except KeyboardInterrupt:
         set_work_timeline(uuid, 'train', -1, 'KeyboardInterrupt')
         return False, 'failed', 'KeyboardInterrupt'
@@ -29,7 +30,7 @@ def worker(uuid: str):
 
     set_work_timeline(uuid, 'test', 1, '')
     try:
-        test(uuid, model, data_locator, random_state)
+        test(uuid, model, data_locator, environment, random_state)
     except KeyboardInterrupt:
         set_work_timeline(uuid, 'test', -1, 'KeyboardInterrupt')
         return False, 'failed', 'KeyboardInterrupt'
