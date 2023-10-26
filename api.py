@@ -1,3 +1,9 @@
+from api import get_local_ip, get_version, tasks, works
+from api.algorithms import list_algorithms
+from api.data_locators import list_locators
+from api.environments import list_environments
+from worker import worker
+
 from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,18 +13,9 @@ import socketio
 from typing import Any
 from time import sleep
 import os
-
 from multiprocessing import Process
 
-import api.tasks as tasks
-import api.works as works
-from api.list_algorithm import list_algorithm
-from api.list_data_locator import list_data_locator
-from api.list_environment import list_environment
-from worker.worker import worker
-from worker.backtest import backtest
-from util.network import get_local_ip
-from util.get_git_hash import get_git_hash
+from backtest.backtest import backtest
 
 SERVICES = []
 
@@ -76,12 +73,12 @@ async def ping(sid):
 
 @sio.event
 async def connect(sid, environ):
-    await sio.emit("git_version", get_git_hash(), room=sid)
+    await sio.emit("git_version", get_version(), room=sid)
     await sio.emit("update_tasks", tasks.list_tasks(), room=sid)
     await sio.emit("update_works", works.list_works(), room=sid)
-    await sio.emit("update_algorithm", list_algorithm(), room=sid)
-    await sio.emit("update_data_locator", list_data_locator(), room=sid)
-    await sio.emit("update_environment", list_environment(), room=sid)
+    await sio.emit("update_algorithm", list_algorithms(), room=sid)
+    await sio.emit("update_data_locator", list_locators(), room=sid)
+    await sio.emit("update_environment", list_environments(), room=sid)
     print(f"connect {sid}")
 
 
@@ -115,9 +112,9 @@ async def create_work(sid, data):
 async def update_all(sid):
     await sio.emit("update_tasks", tasks.list_tasks(), room=None)
     await sio.emit("update_works", works.list_works(), room=None)
-    await sio.emit("update_algorithm", list_algorithm(), room=None)
-    await sio.emit("update_data_locator", list_data_locator(), room=None)
-    await sio.emit("update_environment", list_environment(), room=None)
+    await sio.emit("update_algorithm", list_algorithms(), room=None)
+    await sio.emit("update_data_locator", list_locators(), room=None)
+    await sio.emit("update_environment", list_environments(), room=None)
 
 
 @sio.event
@@ -136,7 +133,7 @@ async def export_work(sid, data):
 
 
 @sio.event
-async def backtest(sid, data):
+async def backtesting(sid, data):
     status, msg, detail = backtest(**data)
     return status, msg, detail
 
@@ -146,12 +143,12 @@ def run_worker():
         while True:
             for w in works.list_works():
                 if w['status'] == 0:
-                    works.set_work_status(w['id'], 1, 'start running')
+                    works.set_status(w['id'], 1, 'start running')
                     status, msg, detail = worker(w['id'])
                     if status:
-                        works.set_work_status(w['id'], 2, 'finished')
+                        works.set_status(w['id'], 2, 'finished')
                     else:
-                        works.set_work_status(w['id'], -1, detail)
+                        works.set_status(w['id'], -1, detail)
 
             print("waiting for 10 seconds")
             sleep(10)

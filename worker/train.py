@@ -1,6 +1,6 @@
+from api.environments import get_environment
 from typing import Callable, Optional
 from stable_baselines3.common.base_class import BaseAlgorithm
-from util.get_environment import get_environment
 
 
 def train(uuid: str,

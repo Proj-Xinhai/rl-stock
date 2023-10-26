@@ -1,7 +1,7 @@
 import importlib
 
 
-def list_algorithm():
+def list_algorithms():
     sb3 = importlib.import_module('stable_baselines3').__dict__
     sb3_contrib = importlib.import_module('sb3_contrib').__dict__
 

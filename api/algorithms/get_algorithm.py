@@ -13,4 +13,4 @@ def get_algorithm(algorithm: str) -> Optional[ABCMeta]:
 
 
 if __name__ == '__main__':
-    raise RuntimeError('This module is not runnable')
+    raise NotImplementedError('This file is not runnable.')

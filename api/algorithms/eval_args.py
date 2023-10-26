@@ -1,8 +1,7 @@
+from ..algorithms import get_algorithm
 from ast import literal_eval
 from typeguard import check_type, TypeCheckError
 from typing import Tuple, Union
-
-from util.get_algorithm import get_algorithm
 
 
 def eval_args(algorithm: str, algorithm_args: dict, learn_args: dict) -> Union[(
@@ -47,4 +46,4 @@ def eval_args(algorithm: str, algorithm_args: dict, learn_args: dict) -> Union[(
 
 
 if __name__ == '__main__':
-    raise RuntimeError('This module is not runnable')
+    raise NotImplementedError('This file is not runnable.')

@@ -21,4 +21,4 @@ def check_port(port):
 
 
 if __name__ == '__main__':
-    raise RuntimeError('This module is not runnable')
+    raise NotImplementedError('This file is not runnable.')

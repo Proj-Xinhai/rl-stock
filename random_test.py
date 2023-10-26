@@ -1,13 +1,25 @@
-from api.environments import get_environment
-from api.works import set_evaluation
 from typing import Callable, Optional
 from torch.utils.tensorboard import SummaryWriter
-from stable_baselines3.common.base_class import BaseAlgorithm
 import statistics
+from data_locator.hodgepodge_locator import HodgepodgeLocator
+
+from util.get_environment import get_environment
+import json
+
+
+def set_evaluation(uuid: str, evaluation: dict):
+    with open(f'tasks/works/{uuid}.json', 'r') as f:
+        args = json.load(f)
+
+    args['evaluation'].append(evaluation)
+
+    with open(f'tasks/works/{uuid}.json', 'w') as f:
+        json.dump(args, f)
+
+    return True, 'success', ''
 
 
 def test(uuid: str,
-         model: BaseAlgorithm,
          data_locator: Callable,
          environment: str,
          random_state: Optional[int] = None):
@@ -21,7 +33,7 @@ def test(uuid: str,
 
     step_count = 0
     while True:
-        action, _ = model.predict(obs, deterministic=True)
+        action = env.action_space.sample()
         obs, rewards, terminated, truncated, info = env.step(action)
 
         writer.add_scalar('env/balance', env.info.balance, step_count)
@@ -60,3 +72,7 @@ def test(uuid: str,
                     'value': min(rois)
                 })
                 break
+
+
+if __name__ == '__main__':
+    test(uuid='random', data_locator=HodgepodgeLocator, environment='trade_enhance')

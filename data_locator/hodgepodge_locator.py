@@ -1,4 +1,4 @@
-from util.basic_data_locator import BasicDataLocator
+from ._basic_data_locator import BasicDataLocator
 import pandas as pd
 import talib
 

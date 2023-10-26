@@ -3,21 +3,21 @@ import re
 import importlib
 
 
-def list_environment():
-    files = os.listdir('environment')
+def list_locators():
+    files = os.listdir('data_locator')
     files = [f for f in files if not re.match(r'__.*__', f)]
     files = [f[:-3] for f in files if f.endswith('.py') and not f.startswith('_')]
 
-    environments = []
+    locators = []
 
     for loc in files:
-        loaded_environment = importlib.import_module('environment.' + loc).__dict__
-        environments.append({
+        loaded_data_locator = importlib.import_module('data_locator.' + loc).__dict__
+        locators.append({
             'name': loc,
-            'description': loaded_environment['DESCRIPT']
+            'description': loaded_data_locator['DESCRIPT']
         })
 
-    return environments
+    return locators
 
 
 if __name__ == '__main__':
