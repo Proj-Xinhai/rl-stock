@@ -16,6 +16,7 @@ from api.list_algorithm import list_algorithm
 from api.list_data_locator import list_data_locator
 from api.list_environment import list_environment
 from worker.worker import worker
+from worker.backtest import backtest
 from util.network import get_local_ip
 from util.get_git_hash import get_git_hash
 
@@ -132,6 +133,12 @@ async def export_task(sid, data):
 @sio.event
 async def export_work(sid, data):
     return works.export_work(data)
+
+
+@sio.event
+async def backtest(sid, data):
+    status, msg, detail = backtest(**data)
+    return status, msg, detail
 
 
 def run_worker():
