@@ -1,9 +1,17 @@
-from api import get_local_ip
-from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceStateChange
+from api import tasks, works, get_local_ip, find_port, get_version
+from api.algorithms import list_algorithms
+from api.data_locators import list_locators
+from api.environments import list_environments
+from worker import worker
+from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceStateChange, NonUniqueNameException
 import socket
-import uvicorn
 import os
 from time import sleep
+from uuid import uuid4
+from multiprocessing import Process
+import socketio
+import eventlet
+from eventlet import wsgi
 
 
 SERVICES = []
@@ -14,46 +22,196 @@ def on_service_state_change(zeroconf: Zeroconf, service_type: str, name: str, st
         info = zeroconf.get_service_info(service_type, name)
         if info:
             if info.properties[b'service'] == b'rl-stock':
-                SERVICES.append(info.server.strip('.'))
+                print('new service detected')
+                SERVICES.append({
+                    'name': info.server.strip('.'),
+                    'port': info.port,
+                })
+                print(SERVICES)
 
     if state_change is ServiceStateChange.Removed:
         info = zeroconf.get_service_info(service_type, name)
         if info:
             if info.properties[b'service'] == b'rl-stock':
-                SERVICES.remove(info.server.strip('.'))
+                print('service removed')
+                SERVICES.remove({
+                    'name': info.server.strip('.'),
+                    'port': info.port,
+                })
+                print(SERVICES)
 
 
-def api():
-    info = ServiceInfo(
-        "_http._tcp.local.",
-        "RL Stock._http._tcp.local.",
+def zeroconf_service(port: int):
+    index_service_info = ServiceInfo(
+        '_http._tcp.local.',
+        'RL Stock Index._http._tcp.local.',
         addresses=[socket.inet_aton(get_local_ip())],
-        port=8000,
-        properties={"service": "rl-stock"},
-        server="rl-stock.local.",
+        port=port,
+        properties={'service': 'rl-stock-index'},
+        server='rl-stock.local.',
+    )
+    service = uuid4().hex[:7]
+    service_info = ServiceInfo(
+        '_http._tcp.local.',
+        f'RL Stock {service}._http._tcp.local.',
+        addresses=[socket.inet_aton(get_local_ip())],
+        port=port,
+        properties={'service': 'rl-stock'},
+        server=f'rl-stock-{service}.local.',
     )
 
     zeroconf = Zeroconf()
-    zeroconf.register_service(info)
-    browser = ServiceBrowser(zeroconf,
-                             "_http._tcp.local.",
-                             handlers=[on_service_state_change])
 
-    # uvicorn.run(app, host="0.0.0.0", port=8000)
+    zeroconf.register_service(service_info)  # register service (this must success immediately)
+
+    while True:
+        # try to register service until success
+        try:
+            zeroconf.register_service(index_service_info)
+            print('index service started')
+            break  # register success
+        except NonUniqueNameException:
+            sleep(10)  # register fail, wait for 10 seconds
+
     try:
         while True:
-            sleep(10)
+            sleep(10)  # keep service alive
     except KeyboardInterrupt:
-        print("worker stopped")
+        print('index service stopped')
+
+    zeroconf.unregister_service(index_service_info)
+    zeroconf.unregister_service(service_info)
+    zeroconf.close()
+
+
+def api(port: int):
+    zeroconf = Zeroconf()
+    browser = ServiceBrowser(zeroconf,
+                             '_http._tcp.local.',
+                             handlers=[on_service_state_change])
+
+    sio = socketio.Server(async_mode='eventlet', cors_allowed_origins='*')
+
+    @sio.event(namespace='/service')
+    def connect(sid: str, environ: dict):
+        print(f'connected: {sid}')
+
+    @sio.event(namespace='/service')
+    def disconnect(sid: str):
+        print(f'disconnected: {sid}')
+
+    @sio.event(namespace='/service')
+    def get_services(sid):
+        print(f'get services: {sid}')
+        return SERVICES
+
+    @sio.event
+    def connect(sid, environ: dict):
+        sio.emit("git_version", get_version(), room=sid)
+        sio.emit("update_tasks", tasks.list_tasks(), room=sid)
+        sio.emit("update_works", works.list_works(), room=sid)
+        sio.emit("update_algorithm", list_algorithms(), room=sid)
+        sio.emit("update_data_locator", list_locators(), room=sid)
+        sio.emit("update_environment", list_environments(), room=sid)
+        print(f'connected: {sid}')
+
+    @sio.event
+    def update_all(sid):
+        sio.emit("update_tasks", tasks.list_tasks(), room=None)
+        sio.emit("update_works", works.list_works(), room=None)
+        sio.emit("update_algorithm", list_algorithms(), room=None)
+        sio.emit("update_data_locator", list_locators(), room=None)
+        sio.emit("update_environment", list_environments(), room=None)
+
+    @sio.event
+    def disconnect(sid):
+        print(f"disconnect {sid}")
+
+    @sio.event
+    def ping(sid):
+        return sid
+
+    @sio.event
+    def create_task(sid, data):
+        status, msg, detail = tasks.create_task(**data)
+        sio.emit("update_tasks", tasks.list_tasks(), room=None)
+        return status, msg, detail
+
+    @sio.event
+    def remove_task(sid, data):
+        status, msg, detail = tasks.remove_task(data)
+        sio.emit("update_tasks", tasks.list_tasks(), room=None)
+        return status, msg, detail
+
+    @sio.event
+    def export_task(sid, data):
+        return tasks.export_task(data)
+
+    @sio.event
+    def get_scalar(sid, data):
+        return works.get_scalar(**data)
+
+    @sio.event
+    def create_work(sid, data):
+        status, msg, detail = works.create_work(**data)
+        sio.emit("update_works", works.list_works(), room=None)
+        return status, msg, detail
+
+    @sio.event
+    def export_work(sid, data):
+        return works.export_work(data)
+
+    # @sio.event
+    # def backtesting(sid, data):
+    #     status, msg, detail = backtest(**data)
+    #     return status, msg, detail
+
+    app = socketio.WSGIApp(sio)
+    wsgi.server(eventlet.listen(('', port)), app)
 
     browser.cancel()
-
-    zeroconf.unregister_service(info)
     zeroconf.close()
+
+
+def run_worker():
+    try:
+        while True:
+            for w in works.list_works():
+                if w['status'] == 0:
+                    works.set_status(w['id'], 1, 'start running')
+                    status, msg, detail = worker(w['id'])
+                    if status:
+                        works.set_status(w['id'], 2, 'finished')
+                    else:
+                        works.set_status(w['id'], -1, detail)
+
+            print('waiting for 10 seconds')
+            sleep(10)
+    except KeyboardInterrupt:
+        print('worker stopped')
 
 
 def main():
     if not os.path.exists('tasks/works'):
         os.makedirs('tasks/works')
 
+    port = find_port(8000)
 
+    p_zeroconf_service = Process(target=zeroconf_service, args=(port,))
+    p_zeroconf_service.start()
+
+    p_api = Process(target=api, args=(port,))
+    p_api.start()
+
+    p_worker = Process(target=run_worker)
+    p_worker.start()
+
+    p_zeroconf_service.join()
+    p_api.join()
+    p_worker.join()
+
+    print('bye!')
+
+
+if __name__ == '__main__':
+    main()
