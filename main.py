@@ -2,8 +2,9 @@ from api import tasks, works, get_local_ip, find_port, get_version
 from api.algorithms import list_algorithms
 from api.data_locators import list_locators
 from api.environments import list_environments
+from backtest.backtest import backtest
 from worker import worker
-from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceStateChange, NonUniqueNameException
+from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, NonUniqueNameException, ServiceListener
 import socket
 import os
 from time import sleep
@@ -14,31 +15,27 @@ import eventlet
 from eventlet import wsgi
 
 
-SERVICES = []
+class ZFServiceListener(ServiceListener):
+    def __init__(self):
+        super().__init__()
+        self.services = []
 
+    def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        pass
 
-def on_service_state_change(zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange):
-    if state_change is ServiceStateChange.Added:
-        info = zeroconf.get_service_info(service_type, name)
-        if info:
-            if info.properties[b'service'] == b'rl-stock':
-                print('new service detected')
-                SERVICES.append({
-                    'name': info.server.strip('.'),
-                    'port': info.port,
-                })
-                print(SERVICES)
+    def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        for item in self.services:
+            if item['name'] == name:
+                self.services.remove(item)
 
-    if state_change is ServiceStateChange.Removed:
-        info = zeroconf.get_service_info(service_type, name)
-        if info:
-            if info.properties[b'service'] == b'rl-stock':
-                print('service removed')
-                SERVICES.remove({
-                    'name': info.server.strip('.'),
-                    'port': info.port,
-                })
-                print(SERVICES)
+    def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        info = zc.get_service_info(type_, name)
+        if info.properties[b'service'] == b'rl-stock':
+            self.services.append({
+                'name': name,
+                'server': info.server.strip('.'),
+                'port': info.port,
+            })
 
 
 def zeroconf_service(port: int):
@@ -69,15 +66,16 @@ def zeroconf_service(port: int):
         try:
             zeroconf.register_service(index_service_info)
             print('index service started')
+
+            try:
+                while True:
+                    sleep(10)  # keep service alive
+            except KeyboardInterrupt:
+                print('index service stopped')
+
             break  # register success
         except NonUniqueNameException:
             sleep(10)  # register fail, wait for 10 seconds
-
-    try:
-        while True:
-            sleep(10)  # keep service alive
-    except KeyboardInterrupt:
-        print('index service stopped')
 
     zeroconf.unregister_service(index_service_info)
     zeroconf.unregister_service(service_info)
@@ -86,9 +84,8 @@ def zeroconf_service(port: int):
 
 def api(port: int):
     zeroconf = Zeroconf()
-    browser = ServiceBrowser(zeroconf,
-                             '_http._tcp.local.',
-                             handlers=[on_service_state_change])
+    listener = ZFServiceListener()
+    browser = ServiceBrowser(zeroconf, '_http._tcp.local.', listener)
 
     sio = socketio.Server(async_mode='eventlet', cors_allowed_origins='*')
 
@@ -103,7 +100,7 @@ def api(port: int):
     @sio.event(namespace='/service')
     def get_services(sid):
         print(f'get services: {sid}')
-        return SERVICES
+        return listener.services
 
     @sio.event
     def connect(sid, environ: dict):
@@ -161,10 +158,10 @@ def api(port: int):
     def export_work(sid, data):
         return works.export_work(data)
 
-    # @sio.event
-    # def backtesting(sid, data):
-    #     status, msg, detail = backtest(**data)
-    #     return status, msg, detail
+    @sio.event
+    def backtesting(sid, data):
+        status, msg, detail = backtest(**data)
+        return status, msg, detail
 
     app = socketio.WSGIApp(sio)
     wsgi.server(eventlet.listen(('', port)), app)
@@ -196,6 +193,7 @@ def main():
         os.makedirs('tasks/works')
 
     port = find_port(8000)
+    print(port)
 
     p_zeroconf_service = Process(target=zeroconf_service, args=(port,))
     p_zeroconf_service.start()

@@ -22,7 +22,7 @@ def check_port(port):
 
 def find_port(port: int = 8000):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        if s.connect_ex(('0.0.0.0', port)) == 0:
+        if s.connect_ex(('localhost', port)) == 0:
             return find_port(port + 1)
         else:
             return port
