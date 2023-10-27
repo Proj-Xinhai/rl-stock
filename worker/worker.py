@@ -28,7 +28,7 @@ def worker(uuid: str):
 
     set_timeline(uuid, 'test', 1, '')
     try:
-        test(uuid, model, data_locator, environment, random_state)
+        test(uuid, model, data_locator, environment, random_state, is_recurrent=algorithm.__name__ == 'RecurrentPPO')
     except KeyboardInterrupt:
         set_timeline(uuid, 'test', -1, 'KeyboardInterrupt')
         return False, 'failed', 'KeyboardInterrupt'

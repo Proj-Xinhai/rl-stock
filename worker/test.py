@@ -4,13 +4,15 @@ from typing import Callable, Optional
 from torch.utils.tensorboard import SummaryWriter
 from stable_baselines3.common.base_class import BaseAlgorithm
 import statistics
+import numpy as np
 
 
 def test(uuid: str,
          model: BaseAlgorithm,
          data_locator: Callable,
          environment: str,
-         random_state: Optional[int] = None):
+         random_state: Optional[int] = None,
+         is_recurrent: bool = False):
     env, callback = get_environment(environment)
     env = env(data_locator=data_locator, data_root='data/test', random_state=random_state)
     writer = SummaryWriter(f'tasks/works/{uuid}/{uuid}_test')
@@ -19,10 +21,21 @@ def test(uuid: str,
 
     rois = []
 
+    # for recurrent model
+    state = None
+    episode_start = np.ones(1, dtype=bool)
+
     step_count = 0
     while True:
-        action, _ = model.predict(obs, deterministic=True)
+        if is_recurrent:
+            action, state = model.predict(obs, state=state, episode_start=episode_start, deterministic=True)
+        else:
+            action, _ = model.predict(obs, deterministic=True)
+
         obs, rewards, terminated, truncated, info = env.step(action)
+
+        # for recurrent model
+        episode_start = terminated
 
         writer.add_scalar('env/balance', env.info.balance, step_count)
         writer.add_scalar('env/hold', env.info.hold, step_count)
