@@ -5,9 +5,9 @@ from environment.trade_enhance import (InfoContainer as foreign_InfoContainer,
                                        TensorboardCallback as foreign_TensorboardCallback)
 
 
-class InfoContainer(foreign_InfoContainer):
-    def __init__(self, default_balance: int = 1_000_000):
-        super(InfoContainer, self).__init__(default_balance=default_balance)
+# class InfoContainer(foreign_InfoContainer):
+#     def __init__(self, default_balance: int = 1_000_000):
+#         super(InfoContainer, self).__init__(default_balance=default_balance)
 
 
 class Env(foreign_Env):
@@ -34,8 +34,10 @@ class Env(foreign_Env):
                 reward = reward  # 這裡的 reward 應該是正的
             elif return_by_trade == 10:
                 reward = reward * 2
-            elif reward == -5:
+            elif return_by_trade == -5:
                 reward = reward  # 這裡的 reward 應該是負的
+            elif return_by_trade == -1:
+                reward = reward * 0.5
             else:
                 raise ValueError(f'Unknown return_by_trade: {return_by_trade}! This should not happen!')
         else:

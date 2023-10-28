@@ -1,16 +1,11 @@
+from ..algorithms import eval_args, get_algorithm
+from ..data_locators import list_locators
+from ..environments import get_environment
+from typing import Optional, Tuple
 import os
-import re
-import json
-from datetime import datetime
-from typing import Tuple, Optional
-import importlib
 from pathvalidate import sanitize_filename
-
-from util.load_task import load_task
-from api.list_data_locator import list_data_locator
-from util.eval_args import eval_args
-from util.get_algorithm import get_algorithm
-from util.get_environment import get_environment
+import json
+import importlib
 
 
 def create_task(name: str,
@@ -30,7 +25,7 @@ def create_task(name: str,
         return False, error, detail
 
     # check if data locator is valid (in general, this will not be invalid)
-    if next((loc for loc in list_data_locator() if loc['name'] == data_locator), None) is None:
+    if next((loc for loc in list_locators() if loc['name'] == data_locator), None) is None:
         return False, 'data_locator', f'`{data_locator}` not found'
 
     # check if environment is valid (in general, this will not be invalid)
@@ -76,50 +71,5 @@ def create_task(name: str,
     return True, 'success', name
 
 
-def remove_task(name: str) -> Tuple[bool, str, str]:
-    if os.path.exists(f'tasks/{name}.json'):
-        os.remove(f'tasks/{name}.json')
-        return True, 'success', name
-    else:
-        return False, 'name', f'`{name}` not found'
-
-
-def update_task():
-    pass
-
-
-def list_tasks() -> list:
-    files = os.listdir('tasks')
-    files = [f for f in files if not re.match(r'__.*__', f)]
-    files = [f[:-5] for f in files if f.endswith('.json')]
-
-    tasks = []
-
-    for t in files:
-        with open(f'tasks/{t}.json', 'r') as f:
-            args = json.load(f)
-
-        task = load_task(t)
-        loc = task['data_locator'](index_path='data/ind.csv', data_root='data/test', random_state=task['random_state'])
-        data_example = loc.next().tail(5).to_csv()
-
-        tasks.append({
-            'name': t,
-            'args': args,
-            'date': datetime.fromtimestamp(os.path.getctime(f'tasks/{t}.json')).strftime("%Y-%m-%d %H:%M:%S"),
-            'data_example': data_example
-        })
-
-    return tasks
-
-
-def export_task(name: str) -> dict:
-    if os.path.exists(f'tasks/{name}.json'):
-        with open(f'tasks/{name}.json', 'r') as f:
-            return json.load(f)
-    else:
-        return {}
-
-
 if __name__ == '__main__':
-    raise RuntimeError('This module is not runnable')
+    raise NotImplementedError('This file is not runnable.')

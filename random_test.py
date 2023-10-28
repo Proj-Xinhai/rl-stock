@@ -1,18 +1,28 @@
-from api.environments import get_environment
-from api.works import set_evaluation
 from typing import Callable, Optional
 from torch.utils.tensorboard import SummaryWriter
-from stable_baselines3.common.base_class import BaseAlgorithm
 import statistics
-import numpy as np
+from data_locator.hodgepodge_locator import HodgepodgeLocator
+
+from util.get_environment import get_environment
+import json
+
+
+def set_evaluation(uuid: str, evaluation: dict):
+    with open(f'tasks/works/{uuid}.json', 'r') as f:
+        args = json.load(f)
+
+    args['evaluation'].append(evaluation)
+
+    with open(f'tasks/works/{uuid}.json', 'w') as f:
+        json.dump(args, f)
+
+    return True, 'success', ''
 
 
 def test(uuid: str,
-         model: BaseAlgorithm,
          data_locator: Callable,
          environment: str,
-         random_state: Optional[int] = None,
-         is_recurrent: bool = False):
+         random_state: Optional[int] = None):
     env, callback = get_environment(environment)
     env = env(data_locator=data_locator, data_root='data/test', random_state=random_state)
     writer = SummaryWriter(f'tasks/works/{uuid}/{uuid}_test')
@@ -21,21 +31,10 @@ def test(uuid: str,
 
     rois = []
 
-    # for recurrent model
-    state = None
-    episode_start = np.ones(1, dtype=bool)
-
     step_count = 0
     while True:
-        if is_recurrent:
-            action, state = model.predict(obs, state=state, episode_start=episode_start, deterministic=True)
-        else:
-            action, _ = model.predict(obs, deterministic=True)
-
+        action = env.action_space.sample()
         obs, rewards, terminated, truncated, info = env.step(action)
-
-        # for recurrent model
-        episode_start = terminated
 
         writer.add_scalar('env/balance', env.info.balance, step_count)
         writer.add_scalar('env/hold', env.info.hold, step_count)
@@ -73,3 +72,7 @@ def test(uuid: str,
                     'value': min(rois)
                 })
                 break
+
+
+if __name__ == '__main__':
+    test(uuid='random', data_locator=HodgepodgeLocator, environment='trade_enhance')
