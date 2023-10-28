@@ -10,7 +10,7 @@ class InfoContainer(foreign_InfoContainer):
         super(InfoContainer, self).__init__(default_balance=default_balance)
 
     def reset(self):
-        self.default_balance = self.balance  # 將預設餘額設為當前餘額
+        # self.default_balance = self.balance  # 將預設餘額設為當前餘額
         super(InfoContainer, self).reset()
 
 
@@ -34,8 +34,8 @@ class Env(foreign_Env):
         else:
             holding_cost = self.info.hold * self.info.cost  # holding cost
             roi = (self.info.balance + holding_cost - self.info.default_balance) / self.info.default_balance  # roi
-            self.info.last_roi = roi
             reward = roi - self.info.last_roi
+            self.info.last_roi = roi
 
         return reward
 

@@ -10,7 +10,7 @@ class InfoContainer(foreign_InfoContainer):
         super(InfoContainer, self).__init__(default_balance=default_balance)
 
     def reset(self):
-        self.default_balance = self.balance  # 將預設餘額設為當前餘額
+        # self.default_balance = self.balance  # 將預設餘額設為當前餘額
         super(InfoContainer, self).reset()
 
 
@@ -26,7 +26,6 @@ class Env(foreign_Env):
                                   index_path=index_path,
                                   data_root=data_root,
                                   random_state=random_state)
-
         self.info = InfoContainer()
 
     def _calculate_reward(self, return_by_trade: int, terminated: bool = False) -> float:
@@ -35,8 +34,8 @@ class Env(foreign_Env):
         else:
             holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
             roi = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
-            self.info.last_roi = roi
             reward = roi - self.info.last_roi
+            self.info.last_roi = roi
 
         return reward
 
