@@ -32,7 +32,12 @@ class Env(gym.Env):
     def __init__(self,
                  data_locator: Callable,
                  index_path: str = 'data/ind.csv',
-                 data_root: str = 'data/test',
+                 data_root: str = 'data',
+                 start: str = '2018-02-21',  # train
+                 end: str = '2023-01-17',  # train
+                 online: bool = False,
+                 stock_id: Optional[list] = None,
+                 default_balance: int = 1_000_000,
                  random_state: Optional[int] = None):
         """
         """
@@ -49,9 +54,13 @@ class Env(gym.Env):
         self.random_state = random_state
         self.data_locator = data_locator(index_path=self.index_path,
                                          data_root=self.data_root,
+                                         start=start,
+                                         end=end,
+                                         online=online,
+                                         stock_id=stock_id,
                                          random_state=self.random_state)
         self.data = self.data_locator.next()
-        self.info = InfoContainer()
+        self.info = InfoContainer(default_balance=default_balance)
 
         """
         """
@@ -124,8 +133,9 @@ class Env(gym.Env):
             # self.info.cost  # 加權平均成本不會改變
             # 小數點以下應捨去
             self.info.balance += floor(price * trade)  # 加回賣出金額
-            self.info.net = self.info.balance - self.info.default_balance  # 損益為餘額減去初始餘額 (當次episode累計損益)
             self.info.hold -= trade  # 持有量減少
+            self.info.net = (self.info.balance + floor(self.info.cost * self.info.hold)
+                             - self.info.default_balance)  # 損益為餘額減去初始餘額 (當次episode累計損益)
 
             roi = (self.info.balance - self.info.default_balance) / self.info.default_balance
 
@@ -169,6 +179,9 @@ class Env(gym.Env):
             holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
             reward = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
 
+        reward = reward - self.info.last_roi
+        self.info.last_roi = reward
+
         return reward
 
     def step(self, action) -> tuple[np.ndarray, float, bool, bool, dict]:
@@ -191,7 +204,9 @@ class Env(gym.Env):
 
         observation = self._locate_data(self.info.offset).to_numpy().astype(np.float32)
         info = {
-            'finish': False  # TODO: 晚點改
+            'date': self._locate_data(self.info.offset - 1).name,
+            'action': 'hold' if buy_or_sell is None else 'buy' if buy_or_sell else 'sell',
+            'trade': trade,
         }
 
         return observation, reward, terminated, truncated, info
@@ -223,7 +238,7 @@ class TensorboardCallback(BaseCallback):
         return True
 
 
-DESCRIPT = "New action w/ reward by unrealized roi (not interact w/ return by trade)"
+DESCRIPT = "New action w/ reward by unrealized roi"
 
 
 if __name__ == '__main__':

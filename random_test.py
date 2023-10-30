@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 import statistics
 from data_locator.hodgepodge_locator import HodgepodgeLocator
 
-from util.get_environment import get_environment
+from api.environments import get_environment
 import json
 
 
@@ -24,7 +24,11 @@ def test(uuid: str,
          environment: str,
          random_state: Optional[int] = None):
     env, callback = get_environment(environment)
-    env = env(data_locator=data_locator, data_root='data/test', random_state=random_state)
+    env = env(data_locator=data_locator,
+              data_root='data',
+              start='2023-01-30',
+              end='2023-10-27',
+              random_state=random_state)
     writer = SummaryWriter(f'tasks/works/{uuid}/{uuid}_test')
 
     obs, info = env.reset()

@@ -14,7 +14,11 @@ def test(uuid: str,
          random_state: Optional[int] = None,
          is_recurrent: bool = False):
     env, callback = get_environment(environment)
-    env = env(data_locator=data_locator, data_root='data/test', random_state=random_state)
+    env = env(data_locator=data_locator,
+              data_root='data',
+              start='2023-01-30',
+              end='2023-10-27',
+              random_state=random_state)
     writer = SummaryWriter(f'tasks/works/{uuid}/{uuid}_test')
 
     obs, info = env.reset()
@@ -73,3 +77,5 @@ def test(uuid: str,
                     'value': min(rois)
                 })
                 break
+
+    return statistics.mean(rois)

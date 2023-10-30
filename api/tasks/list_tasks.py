@@ -17,7 +17,11 @@ def list_tasks() -> list:
             continue
 
         task = load_task(t)
-        loc = task['data_locator'](index_path='data/ind.csv', data_root='data/test', random_state=task['random_state'])
+        loc = task['data_locator'](index_path='data/ind.csv',
+                                   data_root='data',
+                                   start='2018-02-21',
+                                   end='2023-01-17',
+                                   random_state=task['random_state'])
         data_example = loc.next().tail(5).to_csv()
 
         tasks.append({
