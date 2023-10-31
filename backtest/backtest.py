@@ -44,7 +44,7 @@ def backtest(stock: str, model: str, default_balance: int, start: str, end: str)
 
             actions = pd.concat([actions, pd.DataFrame({
                 'date': [str(info['date'])],
-                'original_action': [action[0]],
+                'original_action': [action.item(0)],
                 'action': [info['action']],
                 'trade': [info['trade']],
                 'balance': [env.info.balance],
@@ -63,7 +63,7 @@ def backtest(stock: str, model: str, default_balance: int, start: str, end: str)
                 return True, 'success', {
                     'name': env.data_locator.get_index(),
                     'value': roi,
-                    'actions': actions.to_dict(orient='records'),
+                    'actions': actions.to_dict(orient='records')
                 }
     except Exception as e:
         return False, str(e), None
