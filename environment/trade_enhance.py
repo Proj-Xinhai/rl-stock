@@ -174,13 +174,13 @@ class Env(gym.Env):
 
     def _calculate_reward(self, return_by_trade: int, terminated: bool = False) -> float:
         if terminated:
-            reward = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
+            roi = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
         else:
             holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
-            reward = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
+            roi = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
 
-        reward = reward - self.info.last_roi
-        self.info.last_roi = reward
+        reward = roi - self.info.last_roi
+        self.info.last_roi = roi
 
         return reward
 
