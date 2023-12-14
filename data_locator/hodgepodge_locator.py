@@ -17,15 +17,15 @@ class HodgepodgeLocator(BasicDataLocator):
         # 合併完，再計算技術指標 (避免 dropna 把技術指標開頭資料刪除)
         # MACD
         data['MACD'], data['MACDsignal'], data['MACDhist'] = \
-            talib.MACD(data['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
+            talib.MACD(data['close'], fastperiod=12, slowperiod=26, signalperiod=9)
         # RSI
-        data['RSI'] = talib.RSI(data['Close'], timeperiod=14)
+        data['RSI'] = talib.RSI(data['close'], timeperiod=14)
         # CCI
-        data['CCI'] = talib.CCI(data['High'], data['Low'], data['Close'], timeperiod=14)
+        data['CCI'] = talib.CCI(data['max'], data['min'], data['close'], timeperiod=14)
         # ADX
-        data['ADX'] = talib.ADX(data['High'], data['Low'], data['Close'], timeperiod=14)
+        data['ADX'] = talib.ADX(data['max'], data['min'], data['close'], timeperiod=14)
 
-        data = data[['Close',  # 收盤價
+        data = data[['close',  # 收盤價
                      'MACD', 'MACDsignal', 'MACDhist',  # MACD
                      'RSI',  # RSI
                      'CCI',  # CCI

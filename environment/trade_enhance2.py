@@ -9,7 +9,7 @@ class Env(Env_enhance):
         if terminated:
             roi = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
         else:
-            holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
+            holding_value = self.info.hold * self._locate_data(self.info.offset)['close']  # unrealized gain/loss
             roi = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
 
         reward = roi - self.info.last_roi
@@ -20,13 +20,13 @@ class Env(Env_enhance):
         else:
             if return_by_trade == -1:  # 餘額不足導致交易失敗
                 if reward >= 0:
-                    reward = -5
+                    reward = reward * 0.5  # 少 50% 獎勵
                 else:
-                    reward = reward - 5
-            elif return_by_trade == 0:  # 買入或賣出時沒賺錢 (獎勵有動作)
-                reward = 1
-            else:
-                reward = reward * 10
+                    reward = reward * 1.5  # 多 50% 懲罰
+            elif return_by_trade == 0:  # 買入或賣出時沒賺錢
+                reward = 0
+            # else:
+            #     reward = reward * 10
 
         return reward
 

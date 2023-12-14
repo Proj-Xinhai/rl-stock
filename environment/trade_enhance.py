@@ -73,7 +73,7 @@ class Env(gym.Env):
         # action 是比例
         if action > 0:  # Buy
             project = self.info.balance * action  # 愈買入金額
-            trade = project / self.data.iloc[self.info.offset]['Close']  # 實際買入股數
+            trade = project / self.data.iloc[self.info.offset]['close']  # 實際買入股數
             trade = floor(trade)  # 無條件捨去 (最小單位為1股，且不可買超過餘額)
             return True, trade
         elif action < 0:  # Sell
@@ -120,7 +120,7 @@ class Env(gym.Env):
 
         # Buy or Sell
         if buy_or_sell:  # Buy
-            price = self._locate_data(self.info.offset)['Close']  # 買入單價
+            price = self._locate_data(self.info.offset)['close']  # 買入單價
             # 小數點以下應捨去
             # 計算加權平均成本
             self.info.cost = (floor(self.info.cost * self.info.hold) + floor(price * trade)) / (self.info.hold + trade)
@@ -129,7 +129,7 @@ class Env(gym.Env):
             self.info.hold += trade  # 持有量增加
             return 0  # TODO: 嘗試有動作給予獎勵
         else:  # Sell
-            price = self._locate_data(self.info.offset)['Close']  # 賣出單價
+            price = self._locate_data(self.info.offset)['close']  # 賣出單價
             # self.info.cost  # 加權平均成本不會改變
             # 小數點以下應捨去
             self.info.balance += floor(price * trade)  # 加回賣出金額
@@ -148,7 +148,7 @@ class Env(gym.Env):
 
     def _calculate_terminated(self, return_by_trade: int) -> int:
         if self.info.hold > 0:
-            price = self._locate_data(self.info.offset)['Close']  # 賣出單價
+            price = self._locate_data(self.info.offset)['close']  # 賣出單價
             # 小數點以下應捨去
             self.info.balance += floor(price * self.info.hold)  # 加回餘額
             self.info.net = self.info.balance - self.info.default_balance  # 損益為餘額減去初始餘額 (當次episode累計損益)
@@ -176,7 +176,7 @@ class Env(gym.Env):
         if terminated:
             roi = (self.info.balance - self.info.default_balance) / self.info.default_balance  # 已實現報酬率
         else:
-            holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
+            holding_value = self.info.hold * self._locate_data(self.info.offset)['close']  # unrealized gain/loss
             roi = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
 
         reward = roi - self.info.last_roi
@@ -222,7 +222,7 @@ class TensorboardCallback(BaseCallback):
     def _on_step(self) -> bool:
         info = self.training_env.get_attr('info')[0]
         rollback_cost = info.hold * info.cost  # 把持有成本加回去
-        unrealized_gain_loss = info.hold * self.training_env.get_attr('data')[0].iloc[info.offset]['Close']  # 未實現損益
+        unrealized_gain_loss = info.hold * self.training_env.get_attr('data')[0].iloc[info.offset]['close']  # 未實現損益
         # 未實現損益 - 持有成本 = 未實現淨損益 (期中任何時機皆可)
         # 帳面餘額 - 期初餘額 = 已實現淨損益 (期末，此時應不存在持有成本或未實現損益)
         # roi 為 (帳面餘額 + 持有成本 - 期初餘額) / 期初餘額 = 已實現報酬率

@@ -5,7 +5,8 @@ from api.environments import get_environment
 import numpy as np
 import pandas as pd
 
-def backtest(stock: str, model: str, default_balance: int, start: str, end: str):
+
+def backtest(stock: str, model: str, default_balance: int, start: str, end: str, deterministic: bool):
     try:
         work = load_work(model)
         task = load_task(work['task_name'])
@@ -36,9 +37,9 @@ def backtest(stock: str, model: str, default_balance: int, start: str, end: str)
         step_count = 0
         while True:
             if algorithm.__name__ == 'RecurrentPPO':
-                action, state = model.predict(obs, state=state, episode_start=episode_start, deterministic=True)
+                action, state = model.predict(obs, state=state, episode_start=episode_start, deterministic=deterministic)
             else:
-                action, _ = model.predict(obs, deterministic=True)
+                action, _ = model.predict(obs, deterministic=deterministic)
 
             obs, rewards, terminated, truncated, info = env.step(action)
 
@@ -67,7 +68,6 @@ def backtest(stock: str, model: str, default_balance: int, start: str, end: str)
                 }
     except Exception as e:
         return False, str(e), None
-
 
 
 if __name__ == '__main__':
