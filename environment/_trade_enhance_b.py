@@ -5,11 +5,6 @@ from environment.trade_enhance import (InfoContainer as foreign_InfoContainer,
                                        TensorboardCallback as foreign_TensorboardCallback)
 
 
-# class InfoContainer(foreign_InfoContainer):
-#     def __init__(self, default_balance: int = 1_000_000):
-#         super(InfoContainer, self).__init__(default_balance=default_balance)
-
-
 class Env(foreign_Env):
     def __init__(self,
                  data_locator: Callable,

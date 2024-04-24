@@ -3,6 +3,15 @@ import pandas as pd
 import talib
 
 
+def apply_ii(y):
+    if float(y) > 0:
+        return 1
+    elif float(y) < 0:
+        return -1
+    else:
+        return 0
+
+
 class HodgepodgeLocator(BasicDataLocator):
     def __init__(self, *args, **kwargs):
         super(HodgepodgeLocator, self).__init__(*args, **kwargs)
@@ -13,10 +22,10 @@ class HodgepodgeLocator(BasicDataLocator):
         ii = pd.read_csv(f'{self.data_root}/法人買賣超日報_個股/{self.index[self.offset]}.csv', index_col=0)
         ii = ii.reset_index(drop=True).set_index('Date')
 
-        ii = ii.apply(lambda x: x.apply(lambda y: y.replace(',', '') if type(y) == str else y))
+        ii = ii.apply(lambda x: x.apply(lambda y: y.replace(',', '') if isinstance(y, str) else y))
         ii = ii[['外陸資買賣超股數(不含外資自營商)', '外資自營商買賣超股數', '投信買賣超股數', '自營商買賣超股數',
                  '自營商買賣超股數(自行買賣)', '自營商買賣超股數(避險)', '三大法人買賣超股數']]
-        ii = ii.apply(lambda x: x.apply(lambda y: 1 if float(y) > 0 else -1 if float(y) < 0 else 0))
+        ii = ii.apply(lambda x: x.apply(apply_ii))
         ii = ii.shift(1)  # 往下偏移一天 (因為當天結束才會統計買賣超資訊，實務上交易日當天是不知道當天買賣超資訊的)
         ii = ii.fillna(0)  # 用 0 補空值 (影響應該不會太大)
 

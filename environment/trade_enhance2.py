@@ -15,9 +15,7 @@ class Env(Env_enhance):
         reward = roi - self.info.last_roi
         self.info.last_roi = roi
 
-        if terminated:
-            pass
-        else:
+        if not terminated:
             if return_by_trade == -1:  # 餘額不足導致交易失敗
                 if reward >= 0:
                     reward = reward * 0.5  # 少 50% 獎勵

@@ -10,7 +10,6 @@ class InfoContainer(foreign_InfoContainer):
         super(InfoContainer, self).__init__(default_balance=default_balance)
 
     def reset(self):
-        # self.default_balance = self.balance  # 將預設餘額設為當前餘額
         super(InfoContainer, self).reset()
 
 

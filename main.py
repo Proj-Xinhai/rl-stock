@@ -20,9 +20,6 @@ class ZFServiceListener(ServiceListener):
         super().__init__()
         self.services = []
 
-    def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
-        pass
-
     def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
         for item in self.services:
             if item['name'] == name:
@@ -175,7 +172,7 @@ def run_worker():
             for w in works.list_works():
                 if w['status'] == 0:
                     works.set_status(w['id'], 1, 'start running')
-                    status, msg, detail = worker(w['id'])
+                    status, _, detail = worker(w['id'])
                     if status:
                         works.set_status(w['id'], 2, 'finished')
                     else:

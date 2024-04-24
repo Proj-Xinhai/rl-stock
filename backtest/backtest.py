@@ -34,14 +34,13 @@ def backtest(stock: str, model: str, default_balance: int, start: str, end: str,
         state = None
         episode_start = np.ones(1, dtype=bool)
 
-        step_count = 0
         while True:
             if algorithm.__name__ == 'RecurrentPPO':
                 action, state = model.predict(obs, state=state, episode_start=episode_start, deterministic=deterministic)
             else:
                 action, _ = model.predict(obs, deterministic=deterministic)
 
-            obs, rewards, terminated, truncated, info = env.step(action)
+            obs, rewards, terminated, _, info = env.step(action)
 
             actions = pd.concat([actions, pd.DataFrame({
                 'date': [str(info['date'])],
@@ -56,8 +55,6 @@ def backtest(stock: str, model: str, default_balance: int, start: str, end: str,
 
             # for recurrent model
             episode_start = terminated
-
-            step_count += 1
 
             if terminated:
                 roi = (env.info.balance - env.info.default_balance) / env.info.default_balance

@@ -10,6 +10,15 @@ def divide(short_sale_today_balance, margin_purchase_today_balance):
     return short_sale_today_balance / margin_purchase_today_balance
 
 
+def apply_ii(y):
+    if float(y) > 0:
+        return 1
+    elif float(y) < 0:
+        return -1
+    else:
+        return 0
+
+
 class HodgepodgeLocator(BasicDataLocator):
     def __init__(self, *args, **kwargs):
         super(HodgepodgeLocator, self).__init__(*args, **kwargs)
@@ -32,10 +41,7 @@ class HodgepodgeLocator(BasicDataLocator):
         data = data.groupby(['date']).agg({'buy': sum, 'sell': sum})
         data = data.apply(lambda x: x['buy'] - x['sell'], axis=1).to_frame()
         data.columns = ['buy_sell']
-        data = data.apply(lambda x: x.apply(lambda y: 1 if float(y) > 0 else -1 if float(y) < 0 else 0))
-
-        # data = data.shift(1)  # 往下偏移一天 (因為當天結束才會統計買賣超資訊，實務上交易日當天是不知道當天買賣超資訊的)
-        # data = data.fillna(0)  # 用 0 補空值 (影響應該不會太大)
+        data = data.apply(lambda x: x.apply(apply_ii))
 
         return data
 
@@ -56,9 +62,6 @@ class HodgepodgeLocator(BasicDataLocator):
 
         data = data.apply(lambda x: divide(x['ShortSaleTodayBalance'], x['MarginPurchaseTodayBalance']), axis=1).to_frame()
         data.columns = ['short_sale_margin_purchase_ratio']
-
-        # data = data.shift(1)  # 往下偏移一天 (因為當天結束才會統計買賣超資訊，實務上交易日當天是不知道當天買賣超資訊的)
-        # data = data.fillna(0)  # 用 0 補空值 (影響應該不會太大)
 
         return data
 

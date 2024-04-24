@@ -4,6 +4,15 @@ import talib
 from FinMind.data import DataLoader
 
 
+def apply_ii(y):
+    if float(y) > 0:
+        return 1
+    elif float(y) < 0:
+        return -1
+    else:
+        return 0
+
+
 class HodgepodgeLocator(BasicDataLocator):
     def __init__(self, *args, **kwargs):
         super(HodgepodgeLocator, self).__init__(*args, **kwargs)
@@ -31,7 +40,7 @@ class HodgepodgeLocator(BasicDataLocator):
         data = data[['Foreign_Investor', 'Foreign_Dealer_Self', 'Investment_Trust', 'Dealer_self', 'Dealer_Hedging']]
         data['Dealer_total'] = data.apply(lambda x: x['Dealer_self'] + x['Dealer_Hedging'], axis=1)
         data['institutional_investors'] = data.apply(lambda x: sum(x), axis=1)
-        data = data.apply(lambda x: x.apply(lambda y: 1 if float(y) > 0 else -1 if float(y) < 0 else 0))
+        data = data.apply(lambda x: x.apply(apply_ii))
 
         data = data.shift(1)  # 往下偏移一天 (因為當天結束才會統計買賣超資訊，實務上交易日當天是不知道當天買賣超資訊的)
         data = data.fillna(0)  # 用 0 補空值 (影響應該不會太大)

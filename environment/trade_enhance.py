@@ -108,7 +108,6 @@ class Env(gym.Env):
             self.info.holding_count += 1
 
             if self.info.holding_count >= 10:  # 連續第 10 天沒動作
-                # return -3  # 懲罰
                 pass  # 有可能影響訓練，先不懲罰做觀察
 
             return 0
@@ -130,7 +129,7 @@ class Env(gym.Env):
             return 0  # TODO: 嘗試有動作給予獎勵
         else:  # Sell
             price = self._locate_data(self.info.offset)['close']  # 賣出單價
-            # self.info.cost  # 加權平均成本不會改變
+            # 加權平均成本 (self.info.cost) 不會改變
             # 小數點以下應捨去
             self.info.balance += floor(price * trade)  # 加回賣出金額
             self.info.hold -= trade  # 持有量減少
@@ -203,9 +202,15 @@ class Env(gym.Env):
         reward = self._calculate_reward(reward, terminated)
 
         observation = self._locate_data(self.info.offset).to_numpy().astype(np.float32)
+        action_name = 'hold'
+        if buy_or_sell:
+            action_name = 'buy'
+        else:
+            action_name = 'sell'
+
         info = {
             'date': self._locate_data(self.info.offset - 1).name,
-            'action': 'hold' if buy_or_sell is None else 'buy' if buy_or_sell else 'sell',
+            'action': action_name,
             'trade': trade,
         }
 
