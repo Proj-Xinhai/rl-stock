@@ -30,16 +30,13 @@ class Env(foreign_Env):
                 reward = 0
             elif return_by_trade == 3:
                 reward = reward * 0.5
-            elif return_by_trade == 8:
-                reward = reward  # 這裡的 reward 應該是正的
             elif return_by_trade == 10:
                 reward = reward * 2
-            elif return_by_trade == -5:
-                reward = reward  # 這裡的 reward 應該是負的
             elif return_by_trade == -1:
                 reward = reward * 0.5
             else:
                 raise ValueError(f'Unknown return_by_trade: {return_by_trade}! This should not happen!')
+            # return_by_trade is 8 or -5, keep reward
         else:
             holding_value = self.info.hold * self._locate_data(self.info.offset)['Close']  # unrealized gain/loss
             reward = (self.info.balance + holding_value - self.info.default_balance) / self.info.default_balance  # roi
