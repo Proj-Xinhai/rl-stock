@@ -17,7 +17,7 @@ def create_task(name: str,
                 random_state: Optional[int]) -> Tuple[bool, str, str]:
     # check if name is valid
     if name == '':
-        return False, 'name', f'cannot be empty'
+        return False, 'name', 'cannot be empty'
 
     _, _, error, detail = eval_args(algorithm, algorithm_args, learn_args)
 

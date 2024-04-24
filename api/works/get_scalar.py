@@ -15,7 +15,7 @@ def get_scalar(uuid: str, gets=None) -> dict:
 
     try:
         if 'train' not in gets:
-            raise Exception('train not in gets')
+            raise FileNotFoundError('train not in gets')
 
         if os.path.exists(f'tasks/works/{uuid}/{uuid}_1'):
             train = EventAccumulator(f'tasks/works/{uuid}/{uuid}_1')
@@ -44,12 +44,12 @@ def get_scalar(uuid: str, gets=None) -> dict:
             train_temp = train_temp.reset_index(name='data')
 
             data['train'] = train_temp.to_dict('records')
-    except Exception as e:
+    except FileNotFoundError:
         data['train'] = []
 
     try:
         if 'test' not in gets:
-            raise Exception('test not in gets')
+            raise FileNotFoundError('test not in gets')
 
         if os.path.exists(f'tasks/works/{uuid}/{uuid}_test'):
             test = EventAccumulator(f'tasks/works/{uuid}/{uuid}_test')
@@ -78,7 +78,7 @@ def get_scalar(uuid: str, gets=None) -> dict:
             test_temp = test_temp.reset_index(name='data')
 
             data['test'] = test_temp.to_dict('records')
-    except Exception as e:
+    except FileNotFoundError:
         data['test'] = []
 
     return data

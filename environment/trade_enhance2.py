@@ -25,8 +25,6 @@ class Env(Env_enhance):
                     reward = reward * 1.5  # 多 50% 懲罰
             elif return_by_trade == 0:  # 買入或賣出時沒賺錢
                 reward = 0
-            # else:
-            #     reward = reward * 10
 
         return reward
 

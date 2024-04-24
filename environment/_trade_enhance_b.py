@@ -46,13 +46,12 @@ class Env(foreign_Env):
 
             if return_by_trade == 0:
                 reward = 0
-            elif return_by_trade == 5:
-                reward = reward
             elif return_by_trade == -1:
                 if reward > 0:
                     reward = reward * 0.5
                 else:
                     reward = reward * 2
+            # if return_by_trade is 5, keep reward
             else:
                 raise ValueError(f'Unknown return_by_trade: {return_by_trade}! This should not happen!')
 

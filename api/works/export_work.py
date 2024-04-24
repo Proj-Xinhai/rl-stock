@@ -22,7 +22,7 @@ def export_work(uuid: str) -> Tuple[bool, str, Union[str, bytes]]:
         zf.write(f'tasks/works/{uuid}.json', arcname=f'{uuid}.json')
         for root, dirs, files in os.walk(f'tasks/works/{uuid}'):
             for file in files:
-                zf.write(os.path.join(root, file), arcname=os.path.join(root, file)[len(f'tasks/works') + 1:])
+                zf.write(os.path.join(root, file), arcname=os.path.join(root, file)[len('tasks/works') + 1:])
 
     return True, 'success', buffer.getvalue()
 
