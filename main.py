@@ -160,8 +160,7 @@ def api(port: int):
 
     @sio.event
     def backtesting(sid, data):
-        status, msg, detail = backtest(**data)
-        return status, msg, detail
+        return backtest(**data)
 
     app = socketio.WSGIApp(sio)
     wsgi.server(eventlet.listen(('', port)), app)

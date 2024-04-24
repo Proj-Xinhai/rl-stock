@@ -8,3 +8,4 @@
 /tensorboard/
 /model/
 /tasks/
+.env
